@@ -1,0 +1,127 @@
+﻿using Api.Data;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Shared.Models;
+
+namespace Api.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class PeticionesController : ControllerBase
+    {
+
+        private readonly AppDbContext _context;
+
+        public PeticionesController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // 1. GET ALL: api/Peticiones
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Peticiones>>> GetPeticiones
+            ()
+        {
+            var lista = await _context.Peticiones
+                .Include(l => l.Laboratorios.Nombre_Laboratorio) // Incluir el laboratorio relacionado
+                .ToListAsync();
+            return Ok(lista);
+        }
+
+        // 2. GET BY ID: api/Peticiones/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Peticiones>> GetPeticione(int id)
+        {
+            var Peticione = await _context.Peticiones.FindAsync(id);
+
+            if (Peticione == null)
+            {
+                return NotFound(new { mensaje = $"No se encontró la Peticione con ID {id}" });
+            }
+
+            return Peticione;
+        }
+
+        // 3. POST (Crear): api/Peticiones
+        [HttpPost]
+        public async Task<ActionResult<Peticiones>> PostPeticione(Peticiones Peticione)
+        {
+            _context.Peticiones.Add(Peticione);
+            await _context.SaveChangesAsync();
+
+            // Esto devuelve un estatus 201 Created y la ruta para consultar el objeto creado
+            return CreatedAtAction(nameof(GetPeticione), new { id = Peticione.Id }, Peticione);
+        }
+        [HttpPost("responder")]
+        public async Task<IActionResult> ResponderPeticion(Respuesta nuevaRespuesta)
+        {
+            // 1. Validar si la petición existe
+            var existePeticion = await _context.Peticiones.AnyAsync(p => p.Id == nuevaRespuesta.PeticionId);
+            if (!existePeticion) return NotFound("La petición original no existe.");
+
+            // 2. Validar si ya tiene una respuesta asignada (para respetar el 1 a 1)
+            var yaTieneRespuesta = await _context.Respuestas.AnyAsync(r => r.PeticionId == nuevaRespuesta.PeticionId);
+            if (yaTieneRespuesta) return BadRequest("Esta petición ya fue respondida anteriormente.");
+
+            // 3. Guardar la respuesta
+            _context.Respuestas.Add(nuevaRespuesta);
+            await _context.SaveChangesAsync();
+
+            return Ok("Respuesta registrada con éxito.");
+        }
+
+        // 4. PUT (Actualizar): api/Peticiones/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPeticione(int id, Peticiones Peticione)
+        {
+            if (id != Peticione.Id)
+            {
+                return BadRequest(new { mensaje = "El ID del parámetro no coincide con el ID del objeto" });
+            }
+
+            _context.Entry(Peticione).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!PeticioneExists(id))
+                {
+                    return NotFound(new { mensaje = $"La Peticione con ID {id} ya no existe" });
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent(); // Estatus 204: Actualizado con éxito, sin contenido que devolver
+        }
+
+        // 5. DELETE: api/Peticiones/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePeticione(int id)
+        {
+            var Peticione = await _context.Peticiones.FindAsync(id);
+            if (Peticione == null)
+            {
+                return NotFound(new { mensaje = $"No se encontró la Peticione con ID {id} para eliminar" });
+            }
+
+            _context.Peticiones.Remove(Peticione);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // Estatus 204: Eliminado con éxito
+        }
+
+        // Método de soporte para verificar si el registro existe
+        private bool PeticioneExists(int id)
+        {
+            return _context.Peticiones.Any(e => e.Id == id);
+        }
+    }
+
+}
