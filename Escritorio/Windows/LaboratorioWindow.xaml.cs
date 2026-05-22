@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 
 namespace Escritorio.Windows
 {
+    //version de la vaina 1.0 y proximo actulizacion
+
     /// <summary>
     /// Lógica de interacción para LaboratorioWindow.xaml
     /// </summary>
@@ -25,17 +27,30 @@ namespace Escritorio.Windows
         public LaboratorioWindow()
         {
             InitializeComponent();
-
             // Inicializar el broker y comenzar la conexión
             miBroker = new EscritorioMQTT();
-            ConectarBrokerAsincrono();
+
+            //Asignar el manejador de mensajes antes de conectar
+            miBroker.MensajeRecibido += (topic, payload) =>
+            {
+                if (topic == MqttServices.statusTopic)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        // Lógica de UI: Si payload es "online", color verde, etc.
+                        StatusIndicator.Fill = (payload == "online") ? Brushes.Green : Brushes.Red;
+                    });
+                }
+            };
+            ConectarYSuscribir();
         }
 
-        private async void ConectarBrokerAsincrono()
+        private async void ConectarYSuscribir()
         {
             try
             {
                 await miBroker.ConectarAsync();
+                await miBroker.SuscribirseAsync(MqttServices.statusTopic);
             }
             catch (Exception ex)
             {
@@ -95,7 +110,7 @@ namespace Escritorio.Windows
 
             try
             {
-                // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
+                // Publicamos el mensaje "3" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
                 await miBroker.PublicarMensajeAsync(MqttServices.abrir, Jsonlab3);
 
                 // Confirmación visual opcional
@@ -124,7 +139,7 @@ namespace Escritorio.Windows
 
             try
             {
-                // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
+                // Publicamos el mensaje "4" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
                 await miBroker.PublicarMensajeAsync(MqttServices.abrir, Jsonlab4);
 
                 // Confirmación visual opcional

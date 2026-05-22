@@ -13,4 +13,5 @@ public static class MqttServices
     //Topicos MQTT
     public static string abrir = "UPT/LABORATORIOS";
     public static string peticion = "casa/peticion/control";
+    public static string statusTopic = "UPT/LABORATORIOS/status";
 }
