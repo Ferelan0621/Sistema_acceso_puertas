@@ -66,9 +66,44 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.60" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.8" />
 		<PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Shared\Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="MyShell.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\HistorialPeticiones.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\IniciarSesion.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Inicio.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Logout.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\NewPage1.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Password.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Peticion.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Registro.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	</ItemGroup>
 
 </Project>

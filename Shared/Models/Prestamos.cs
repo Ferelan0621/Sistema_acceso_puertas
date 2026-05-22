@@ -1,7 +1,7 @@
 ﻿
 namespace Shared.Models
 {
-    public class Peticiones
+    public class Prestamos
     {
         public int Id { get; set; }
 
@@ -13,10 +13,9 @@ namespace Shared.Models
 
         public int Laboratodio_Id { get; set; }
         public Laboratorios Laboratorios { get; set; }=null!;
-        public int Respuesta_Id { get; set; }
 
-        // RELACIÓN 1 A 1: Una petición tiene UNA SOLA respuesta (o ninguna todavía)
-        public Respuesta? Respuesta { get; set; }
+        public ICollection<Encargados> Encargados { get; set; } = new List<Encargados>();
+
         public DateTime Fecha_Peticion { get; set; }
         public DateTime Hora_Inicio { get; set; }   
         public DateTime Hora_Final { get; set; }    

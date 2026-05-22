@@ -13,7 +13,7 @@ namespace Shared.Models
         public Rol Rol { get; set; } = Rol.Administrador;
 
         // VÍNCULO: ID del laboratorio al que pertenece este encargado
-        public int LaboratorioId { get; set; }
-        public Laboratorios Laboratorio { get; set; } = null!;
+        public int PrestamoId { get; set; }
+        public Prestamos Prestamos { get; set; } = null!;
     }
 }

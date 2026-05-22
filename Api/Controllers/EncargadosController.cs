@@ -21,7 +21,7 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Encargados>>> GetEncargados()
         {
             var lista = await _context.Encargados
-                .Include(e => e.Laboratorio.Nombre_Laboratorio) // Incluir el laboratorio relacionado
+                .Include(e => e.Prestamos.Nombre_Laboratorio) // Incluir el laboratorio relacionado
                 .ToListAsync();
             return Ok(lista);
             //return await _context.Encargados.ToListAsync();

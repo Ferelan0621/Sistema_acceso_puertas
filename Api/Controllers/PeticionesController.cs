@@ -20,7 +20,7 @@ namespace Api.Controllers
 
         // 1. GET ALL: api/Peticiones
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Peticiones>>> GetPeticiones
+        public async Task<ActionResult<IEnumerable<Prestamos>>> GetPeticiones
             ()
         {
             var lista = await _context.Peticiones
@@ -31,7 +31,7 @@ namespace Api.Controllers
 
         // 2. GET BY ID: api/Peticiones/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Peticiones>> GetPeticione(int id)
+        public async Task<ActionResult<Prestamos>> GetPeticione(int id)
         {
             var Peticione = await _context.Peticiones.FindAsync(id);
 
@@ -45,7 +45,7 @@ namespace Api.Controllers
 
         // 3. POST (Crear): api/Peticiones
         [HttpPost]
-        public async Task<ActionResult<Peticiones>> PostPeticione(Peticiones Peticione)
+        public async Task<ActionResult<Prestamos>> PostPeticione(Prestamos Peticione)
         {
             _context.Peticiones.Add(Peticione);
             await _context.SaveChangesAsync();
@@ -73,7 +73,7 @@ namespace Api.Controllers
 
         // 4. PUT (Actualizar): api/Peticiones/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPeticione(int id, Peticiones Peticione)
+        public async Task<IActionResult> PutPeticione(int id, Prestamos Peticione)
         {
             if (id != Peticione.Id)
             {

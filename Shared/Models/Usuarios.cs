@@ -11,7 +11,7 @@ namespace Shared.Models
         public string Password { get; set; } = null!;
         public Rol Rol { get; set; }
 
-        // Relación uno a muchos con Peticiones
-        public ICollection<Peticiones> Peticiones { get; set; } = new List<Peticiones>();
+        // Relación uno a muchos con Prestamos
+        public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
     }
 }

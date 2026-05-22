@@ -13,8 +13,7 @@ namespace Shared.Models
         public EstadoLaboratorio Estado { get; set; }
 
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
-        public ICollection<Encargados> Encargados { get; set; } = new List<Encargados>();
-        public ICollection<Peticiones> Peticiones { get; set; } = new List<Peticiones>();
+        public ICollection<Prestamos> Peticiones { get; set; } = new List<Prestamos>();
 
     }
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Movil.Pages.IniciarSesion"
+             Title="IniciarSesion">
+    <Grid>
+        <VerticalStackLayout>
+        <Label
+    x:Name="txtUsuario"
+    Text="Usuario"
+    />
+        <Entry Placeholder=""
+      x:Name="etUsuario"/>
+
+        <Label
+    x:Name="txtPasword"
+    Text="Contraseña"/>
+        <Entry Placeholder=""
+       x:Name="etPasword"
+       />
+
+        <Button
+    x:Name="btnIniciarsesion"
+    Margin="60,50"
+            IsEnabled="True"
+    Text="Iniciar Sesion"
+            Clicked="btnIniciarsesion_Clicked"
+    />
+          
+            <Button
+    x:Name="btnRegistrar"
+    Margin="60,50"
+    Text="Registrarse"
+            Clicked="btnRegistrar_Clicked"
+    /> 
+            <Label
+                Text="¿Olvidaste tu contraseña?"
+                TextDecorations="Underline"
+                TextColor="DodgerBlue"
+                HorizontalOptions="Center">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnForgotPasswordTapped"/>
+                </Label.GestureRecognizers>
+            </Label>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>
