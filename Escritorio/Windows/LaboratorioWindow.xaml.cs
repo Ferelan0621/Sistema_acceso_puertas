@@ -58,6 +58,29 @@ namespace Escritorio.Windows
             }
         }
 
+        private void MiBroker_MensajeRecibido(string topic, string payload)
+        {
+            // Verificamos si el mensaje viene del tópico de estado
+            if (topic == MqttServices.statusTopic)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (payload == "online")
+                    {
+                        // Cambiar color a verde (conectado)
+                        StatusIndicator.Fill = new SolidColorBrush(Colors.Green);
+                        lblStatus.Text = "Conectado";
+                    }
+                    else
+                    {
+                        // Cambiar color a rojo (desconectado)
+                        StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
+                        lblStatus.Text = "Desconectado";
+                    }
+                });
+            }
+        }
+
         private void btnNuevolaboratorio_Click(object sender, RoutedEventArgs e)
         {
             NuevolaboratorioWindow ventaNuevoLab = new NuevolaboratorioWindow();
