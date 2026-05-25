@@ -5,8 +5,26 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Escritorio"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Inicio de Sesion" Height="450" Width="800">
     <Grid>
-
+        <Button x:Name="btnIniciar"  Content="Iniciar" HorizontalAlignment="Left" Margin="123,301,0,0" VerticalAlignment="Top" Click="btnIniciar_Click"/>
+        <Button x:Name="btnRegistrarse"  Content="Registrarse" HorizontalAlignment="Left" Margin="201,301,0,0" VerticalAlignment="Top" Click="btnRegistrarse_Click"/>
+        <TextBox x:Name="txtUsuario" HorizontalAlignment="Left" Margin="123,146,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="335"/>
+        <TextBox x:Name="txtContrasenia" HorizontalAlignment="Left" Margin="123,230,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="336"/>
+        <Label Content="Ingrese un Usuario y Contraseña validos" HorizontalAlignment="Center" Margin="0,53,0,0" VerticalAlignment="Top"/>
+        <Label Content="Ingresar Usuario" HorizontalAlignment="Left" Margin="135,120,0,0" VerticalAlignment="Top"/>
+        <Label Content="Ingresar la Contrsaeña" HorizontalAlignment="Left" Margin="135,0,0,0" VerticalAlignment="Center"/>
+        <Label 
+            Margin="10,20,10,100"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom">
+            <TextBlock>
+                <Hyperlink Click="lblContrasenia" Cursor="Hand">
+                    ¿Haz olvidado la contraseña?
+                </Hyperlink>
+            </TextBlock>
+        </Label>
+        <Label x:Name="lblFaltausuario" Content="*Por favor agrega un Usuario valido" HorizontalAlignment="Left" Margin="135,169,0,0" VerticalAlignment="Top" Foreground="Red" Visibility="Hidden"/>
+        <Label x:Name="lblFaltacontrasenia" Content="*Contraseña incorrecta intente de nuevo" HorizontalAlignment="Left" Margin="135,253,0,0" VerticalAlignment="Top" Foreground="Red" Visibility="Hidden"/>
     </Grid>
 </Window>
