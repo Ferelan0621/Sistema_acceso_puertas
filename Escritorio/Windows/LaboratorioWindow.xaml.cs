@@ -31,17 +31,7 @@ namespace Escritorio.Windows
             miBroker = new EscritorioMQTT();
 
             //Asignar el manejador de mensajes antes de conectar
-            miBroker.MensajeRecibido += (topic, payload) =>
-            {
-                if (topic == MqttServices.statusTopic)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        // Lógica de UI: Si payload es "online", color verde, etc.
-                        StatusIndicator.Fill = (payload == "online") ? Brushes.Green : Brushes.Red;
-                    });
-                }
-            };
+            miBroker.MensajeRecibido += MensajeRecibido;
             ConectarYSuscribir();
         }
 
@@ -54,11 +44,22 @@ namespace Escritorio.Windows
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al inicializar la conexión MQTT: " + ex.Message, "Error de Conexión", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Mostramos el mensaje y capturamos el resultado del botón presionado
+                MessageBoxResult resultado = MessageBox.Show(
+                    "Error al inicializar la conexión MQTT: " + ex.Message,
+                    "Error de Conexión",
+                    MessageBoxButton.RetryCancel,
+                    MessageBoxImage.Error);
+
+                // Si el usuario presionó "Reintentar", llamamos a este mismo método de nuevo
+                if (resultado == MessageBoxResult.Retry)
+                {
+                    ConectarYSuscribir();
+                }
             }
         }
 
-        private void MiBroker_MensajeRecibido(string topic, string payload)
+        private void MensajeRecibido (string topic, string payload)
         {
             // Verificamos si el mensaje viene del tópico de estado
             if (topic == MqttServices.statusTopic)
