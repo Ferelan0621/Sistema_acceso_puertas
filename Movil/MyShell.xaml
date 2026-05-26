@@ -4,5 +4,31 @@
              x:Class="Movil.MyShell"
              xmlns:local ="clr-namespace:Movil.Pages"
              Title="MyShell">
-    <ShellContent  ContentTemplate="{DataTemplate local:IniciarSesion}"/>
+    <ShellContent Route="IniciarSesion" ContentTemplate="{DataTemplate local:IniciarSesion}"/>
+    <ShellContent Route="Password" ContentTemplate="{DataTemplate local:Password}"/>
+    <ShellContent Route="Registro" ContentTemplate="{DataTemplate local:Registro}"/>
+
+    <TabBar Route="mainapp">
+
+        <Tab Title="Inicio">
+            <ShellContent  
+                Route="inicio"
+                ContentTemplate="{DataTemplate local:Inicio}"/>
+        </Tab>
+
+        <Tab Title="Historial">
+            <ShellContent  
+         Route="historial"
+         ContentTemplate="{DataTemplate local:HistorialPrestamos}"/>
+        </Tab>
+
+        <Tab Title="Cerrar Sesion">
+            <ShellContent  
+         Route="logut"
+         ContentTemplate="{DataTemplate local:Logout}"/>
+        </Tab>
+
+
+    </TabBar>
+    
 </Shell>

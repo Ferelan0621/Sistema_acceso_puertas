@@ -77,10 +77,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Pages\HistorialPrestamos.xaml.cs">
+	    <DependentUpon>HistorialPrestamos.xaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <MauiXaml Update="MyShell.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Pages\HistorialPeticiones.xaml">
+	  <MauiXaml Update="Pages\HistorialPrestamos.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\IniciarSesion.xaml">

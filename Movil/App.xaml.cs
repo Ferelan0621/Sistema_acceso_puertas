@@ -11,7 +11,6 @@ namespace Movil
         public App()
         {
             InitializeComponent();
-            //MainPage = new NavigationPage(new IniciarSesion());
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

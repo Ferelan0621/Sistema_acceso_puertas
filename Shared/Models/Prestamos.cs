@@ -16,7 +16,7 @@ namespace Shared.Models
 
         public ICollection<Encargados> Encargados { get; set; } = new List<Encargados>();
 
-        public DateTime Fecha_Peticion { get; set; }
+        public DateTime Fecha_Prestamo { get; set; }
         public DateTime Hora_Inicio { get; set; }   
         public DateTime Hora_Final { get; set; }    
         public bool Abierto { get; set; }

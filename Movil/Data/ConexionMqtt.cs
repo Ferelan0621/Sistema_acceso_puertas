@@ -70,7 +70,24 @@ namespace Movil.Data
 
             await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
         }
+        //JsonAbrir jsonla2 = new JsonAbrir
+        //{ d = "3", c = "abrir" };
 
-       
+        //string jsonString = JsonSerializer.Serialize(jsonla2);
+        //_mqtt.PublicarMensajeAsync(MqttServices.abrir, jsonString);
+
+        //private async void conectarMqtt()
+        //{
+        //    try
+        //    {
+        //        await conexion.ConectarAsync();
+        //    }
+        //    catch(Exception ex)
+        //    {
+        //        string texto = "no jalo padrino";
+        //        txtUsuario.Text = texto;
+        //    }
+        //}
+
     }
 }

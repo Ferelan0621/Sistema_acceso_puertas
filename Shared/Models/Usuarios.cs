@@ -9,6 +9,7 @@ namespace Shared.Models
         public int Id { get; set; }
         public string Nombre { get; set; } = null!;
         public string Password { get; set; } = null!;
+        public string Clave_ISSEMYM { get; set; } = null!;
         public Rol Rol { get; set; }
 
         // Relación uno a muchos con Prestamos
