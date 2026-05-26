@@ -8,12 +8,12 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PeticionesController : ControllerBase
+    public class PrestamosController : ControllerBase
     {
 
         private readonly AppDbContext _context;
 
-        public PeticionesController(AppDbContext context)
+        public PrestamosController(AppDbContext context)
         {
             _context = context;
         }
@@ -23,7 +23,7 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Prestamos>>> GetPeticiones
             ()
         {
-            var lista = await _context.Peticiones
+            var lista = await _context.Prestamos
                 .Include(l => l.Laboratorios.Nombre_Laboratorio) // Incluir el laboratorio relacionado
                 .ToListAsync();
             return Ok(lista);
@@ -33,7 +33,7 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Prestamos>> GetPeticione(int id)
         {
-            var Peticione = await _context.Peticiones.FindAsync(id);
+            var Peticione = await _context.Prestamos.FindAsync(id);
 
             if (Peticione == null)
             {

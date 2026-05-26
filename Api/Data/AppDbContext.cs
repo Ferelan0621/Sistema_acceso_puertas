@@ -10,7 +10,7 @@ namespace Api.Data
         }
         public DbSet<Usuarios> Usuarios { get; set; }
         public DbSet<Laboratorios> Laboratorios { get; set; }
-        public DbSet<Prestamos> Peticiones { get; set; }
+        public DbSet<Prestamos> Prestamos { get; set; }
         public DbSet<Encargados> Encargados { get; set; }
     }
 }

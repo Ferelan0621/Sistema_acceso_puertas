@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260515232539_Initial")]
-    partial class Initial
+    [Migration("20260526200716_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -36,12 +36,15 @@ namespace Api.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LaboratorioId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PrestamoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrestamosId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Rol")
                         .HasColumnType("int");
@@ -52,7 +55,7 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LaboratorioId");
+                    b.HasIndex("PrestamosId");
 
                     b.ToTable("Encargados");
                 });
@@ -84,7 +87,7 @@ namespace Api.Migrations
                     b.ToTable("Laboratorios");
                 });
 
-            modelBuilder.Entity("Shared.Models.Peticiones", b =>
+            modelBuilder.Entity("Shared.Models.Prestamos", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,7 +98,7 @@ namespace Api.Migrations
                     b.Property<bool>("Abierto")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("Fecha_Peticion")
+                    b.Property<DateTime>("Fecha_Prestamo")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("Hora_Final")
@@ -104,7 +107,10 @@ namespace Api.Migrations
                     b.Property<DateTime>("Hora_Inicio")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Respuesta_Id")
+                    b.Property<int>("Laboratodio_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LaboratoriosId")
                         .HasColumnType("int");
 
                     b.Property<int>("UsuarioId")
@@ -115,35 +121,11 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LaboratoriosId");
+
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Peticiones");
-                });
-
-            modelBuilder.Entity("Shared.Models.Respuesta", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Aceptada")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Nombre_Laboratorio")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PeticionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PeticionId")
-                        .IsUnique();
-
-                    b.ToTable("Respuestas");
+                    b.ToTable("Prestamos");
                 });
 
             modelBuilder.Entity("Shared.Models.Usuarios", b =>
@@ -153,6 +135,10 @@ namespace Api.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Clave_ISSEMYM")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -172,50 +158,47 @@ namespace Api.Migrations
 
             modelBuilder.Entity("Shared.Models.Encargados", b =>
                 {
-                    b.HasOne("Shared.Models.Laboratorios", "Laboratorio")
+                    b.HasOne("Shared.Models.Prestamos", "Prestamos")
                         .WithMany("Encargados")
-                        .HasForeignKey("LaboratorioId")
+                        .HasForeignKey("PrestamosId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Laboratorio");
+                    b.Navigation("Prestamos");
                 });
 
-            modelBuilder.Entity("Shared.Models.Peticiones", b =>
+            modelBuilder.Entity("Shared.Models.Prestamos", b =>
                 {
-                    b.HasOne("Shared.Models.Usuarios", "Usuario")
+                    b.HasOne("Shared.Models.Laboratorios", "Laboratorios")
                         .WithMany("Peticiones")
+                        .HasForeignKey("LaboratoriosId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shared.Models.Usuarios", "Usuario")
+                        .WithMany("Prestamos")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Laboratorios");
+
                     b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("Shared.Models.Respuesta", b =>
-                {
-                    b.HasOne("Shared.Models.Peticiones", "Peticion")
-                        .WithOne("Respuesta")
-                        .HasForeignKey("Shared.Models.Respuesta", "PeticionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Peticion");
                 });
 
             modelBuilder.Entity("Shared.Models.Laboratorios", b =>
                 {
-                    b.Navigation("Encargados");
+                    b.Navigation("Peticiones");
                 });
 
-            modelBuilder.Entity("Shared.Models.Peticiones", b =>
+            modelBuilder.Entity("Shared.Models.Prestamos", b =>
                 {
-                    b.Navigation("Respuesta");
+                    b.Navigation("Encargados");
                 });
 
             modelBuilder.Entity("Shared.Models.Usuarios", b =>
                 {
-                    b.Navigation("Peticiones");
+                    b.Navigation("Prestamos");
                 });
 #pragma warning restore 612, 618
         }

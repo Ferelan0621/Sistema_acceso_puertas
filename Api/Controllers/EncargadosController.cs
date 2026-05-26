@@ -21,7 +21,6 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Encargados>>> GetEncargados()
         {
             var lista = await _context.Encargados
-                .Include(e => e.Prestamos.Nombre_Laboratorio) // Incluir el laboratorio relacionado
                 .ToListAsync();
             return Ok(lista);
             //return await _context.Encargados.ToListAsync();
@@ -32,7 +31,6 @@ namespace Api.Controllers
         public async Task<ActionResult<Encargados>> GetEncargado(int id)
         {
             var lista = await _context.Encargados
-                .Include(e => e.Laboratorio.Nombre_Laboratorio) // Incluir el laboratorio relacionado
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (lista == null)
