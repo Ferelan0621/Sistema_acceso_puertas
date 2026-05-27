@@ -3,10 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Movil.MyShell"
              xmlns:local ="clr-namespace:Movil.Pages"
-             Title="MyShell">
-    <ShellContent Route="IniciarSesion" ContentTemplate="{DataTemplate local:IniciarSesion}"/>
-    <ShellContent Route="Password" ContentTemplate="{DataTemplate local:Password}"/>
-    <ShellContent Route="Registro" ContentTemplate="{DataTemplate local:Registro}"/>
+             Title="MyShell"
+       Shell.FlyoutBehavior="Disabled">
+    <ShellContent Title="Iniciar Sesion" Route="IniciarSesion" ContentTemplate="{DataTemplate local:IniciarSesion}"/>
+ 
 
     <TabBar Route="mainapp">
 

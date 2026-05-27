@@ -4,9 +4,6 @@
              x:Class="Movil.Pages.Logout"
              Title="Logout">
     <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+        <Button x:Name="Cerrar_Sesión" Text="Cerrar Sesion" Clicked="Cerrar_Sesión_Clicked" HorizontalOptions="Center" VerticalOptions="Center"/>
     </VerticalStackLayout>
 </ContentPage>

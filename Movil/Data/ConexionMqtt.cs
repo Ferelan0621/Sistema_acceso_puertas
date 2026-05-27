@@ -33,7 +33,7 @@ namespace Movil.Data
             }
             catch (Exception ex)
             {
-
+                
             }
         }
         //    // 🟢 Evento: Detecta si se conectó con éxito
