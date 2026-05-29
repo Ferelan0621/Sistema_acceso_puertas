@@ -47,7 +47,7 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Prestamos>> PostPeticione(Prestamos Peticione)
         {
-            _context.Peticiones.Add(Peticione);
+            _context.Prestamos.Add(Peticione);
             await _context.SaveChangesAsync();
 
             // Esto devuelve un estatus 201 Created y la ruta para consultar el objeto creado
@@ -88,13 +88,13 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePeticione(int id)
         {
-            var Peticione = await _context.Peticiones.FindAsync(id);
+            var Peticione = await _context.Prestamos.FindAsync(id);
             if (Peticione == null)
             {
                 return NotFound(new { mensaje = $"No se encontró la Peticione con ID {id} para eliminar" });
             }
 
-            _context.Peticiones.Remove(Peticione);
+            _context.Prestamos.Remove(Peticione);
             await _context.SaveChangesAsync();
 
             return NoContent(); // Estatus 204: Eliminado con éxito
@@ -103,7 +103,7 @@ namespace Api.Controllers
         // Método de soporte para verificar si el registro existe
         private bool PeticioneExists(int id)
         {
-            return _context.Peticiones.Any(e => e.Id == id);
+            return _context.Prestamos.Any(e => e.Id == id);
         }
     }
 

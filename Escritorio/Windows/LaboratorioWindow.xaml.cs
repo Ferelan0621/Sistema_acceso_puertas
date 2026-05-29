@@ -41,6 +41,7 @@ namespace Escritorio.Windows
             {
                 await miBroker.ConectarAsync();
                 await miBroker.SuscribirseAsync(MqttServices.statusTopic);
+                await miBroker.SuscribirseAsync(MqttServices.doorTopic);
             }
             catch (Exception ex)
             {
@@ -59,24 +60,47 @@ namespace Escritorio.Windows
             }
         }
 
-        private void MensajeRecibido (string topic, string payload)
+        private void MensajeRecibido(string topic, string payload)
         {
-            // Verificamos si el mensaje viene del tópico de estado
+            // Protección por si el ESP32 manda algo vacío
+            if (string.IsNullOrEmpty(payload)) return;
+
+            // 1. Validamos el tópico de estado de conexión de la app
             if (topic == MqttServices.statusTopic)
             {
                 Dispatcher.Invoke(() =>
                 {
-                    if (payload == "online")
+                    if (payload.ToLower().Contains("online"))
                     {
-                        // Cambiar color a verde (conectado)
                         StatusIndicator.Fill = new SolidColorBrush(Colors.Green);
                         lblStatus.Text = "Conectado";
                     }
                     else
                     {
-                        // Cambiar color a rojo (desconectado)
                         StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
                         lblStatus.Text = "Desconectado";
+                    }
+                });
+            }
+            // Validamos el tópico de la puerta
+            else if (topic == MqttServices.doorTopic)
+            {
+                // Convertimos todo el mensaje a minúsculas para evitar errores de formato
+                string mensajeLimpio = payload.ToLower();
+
+                Dispatcher.Invoke(() =>
+                {
+                    // Evaluamos todas las posibles formas en que tu ESP32 pueda responder
+                    if (mensajeLimpio.Contains("abierta") || mensajeLimpio.Contains("true") || mensajeLimpio.Contains("1") || mensajeLimpio.Contains("open"))
+                    {
+                        imgPuertaCerradaLab2.Visibility = Visibility.Hidden;
+                        imgPuertaAbiertaLab2.Visibility = Visibility.Visible;
+                    }
+                    // Si el sensor detecta que se cerró
+                    else if (mensajeLimpio.Contains("cerrada") || mensajeLimpio.Contains("false") || mensajeLimpio.Contains("0") || mensajeLimpio.Contains("close"))
+                    {
+                        imgPuertaAbiertaLab2.Visibility = Visibility.Hidden;
+                        imgPuertaCerradaLab2.Visibility = Visibility.Visible;
                     }
                 });
             }
