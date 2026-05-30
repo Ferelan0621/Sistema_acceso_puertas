@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -67,6 +67,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.60" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.8" />
 		<PackageReference Include="MQTTnet" Version="4.3.7.1207" />
@@ -79,6 +80,9 @@
 	<ItemGroup>
 	  <Compile Update="Pages\HistorialPrestamos.xaml.cs">
 	    <DependentUpon>HistorialPrestamos.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Pages\Prestamos.xaml.cs">
+	    <DependentUpon>Prestamos.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
@@ -104,7 +108,10 @@
 	  <MauiXaml Update="Pages\Password.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Pages\Peticion.xaml">
+	  <MauiXaml Update="Pages\Prestamos.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\Prueba.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\Registro.xaml">

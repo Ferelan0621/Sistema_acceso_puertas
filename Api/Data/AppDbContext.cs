@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Shared.Models;
+using Api.Models;
 namespace Api.Data
 {
 
@@ -8,9 +8,10 @@ namespace Api.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-        public DbSet<Usuarios> Usuarios { get; set; }
-        public DbSet<Laboratorios> Laboratorios { get; set; }
-        public DbSet<Prestamos> Prestamos { get; set; }
-        public DbSet<Encargados> Encargados { get; set; }
+        public DbSet<Usuarios> usuarios { get; set; }
+     
+        public DbSet<Laboratorios> laboratorios { get; set; }
+        public DbSet<Prestamos> prestamos { get; set; }
+        public DbSet<Encargados> encargados { get; set; }
     }
 }
