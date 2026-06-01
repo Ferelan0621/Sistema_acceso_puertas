@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="Api/Api.csproj" />
   <Project Path="Escritorio/Escritorio.csproj" />
   <Project Path="Movil/Movil.csproj">
     <Deploy Solution="Debug|*" />
