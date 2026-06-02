@@ -11,6 +11,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Shared.Services;
 using Shared.Models;
+using System.Text.Json;
 
 namespace Escritorio
 {
@@ -32,7 +33,7 @@ namespace Escritorio
 
             string usuario = txtUsuario.Text.ToString();
 
-            /*string usuarioCampo = txtUsuario.Text.Trim();
+            string usuarioCampo = txtUsuario.Text.Trim();
             string contraseniaCampo = txtContrasenia.Password.Trim();
             bool datosCompletos = true;
 
@@ -46,7 +47,7 @@ namespace Escritorio
                 lblFaltacontrasenia.Visibility = Visibility.Visible;
                 datosCompletos = false;
             }
-            if (datosCompletos)
+            /*if (datosCompletos)
             {
                 try
                 {
@@ -77,8 +78,8 @@ namespace Escritorio
                     MessageBox.Show($"¡El servidor no responde! ¿Encendiste la API? Error: {ex.Message}", "Fallo de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }*/
-            InicioWindow ventanaInicio = new InicioWindow(usuario);
-            ventanaInicio.Show();
+            InicioWindow ventaInicio = new InicioWindow(usuarioCampo);
+            ventaInicio.Show();
             this.Hide();
         }
 

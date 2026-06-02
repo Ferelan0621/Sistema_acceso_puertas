@@ -13,19 +13,5 @@
         <Button x:Name="btnLab2" Content="Abrir Lab 2" HorizontalAlignment="Left" Margin="71,86,0,0" VerticalAlignment="Top" Click="btnLab2_Click"/>
         <Button x:Name="btnLab3" Content="Abrir Lab 3" HorizontalAlignment="Left" Margin="71,148,0,0" VerticalAlignment="Top" Click="btnLab3_Click"/>
         <Button x:Name="btnLab4" Content="Abrir Lab 4" HorizontalAlignment="Left" Margin="71,0,0,0" VerticalAlignment="Center" Click="btnLab4_Click"/>
-        <Grid>
-            <Image x:Name="imgPuertaCerradaLab2" 
-           Visibility="Visible" 
-           Width="50" Height="50" 
-           Source="/Images/Puerta_cerrada.png"
-           HorizontalAlignment="Left" VerticalAlignment="Top"
-           Margin="200,100,0,0"/>
-            <Image x:Name="imgPuertaAbiertaLab2" 
-           Visibility="Hidden" 
-           Width="50" Height="50" 
-           Source="/Images/Puerta_abierta.png"
-           HorizontalAlignment="Left" VerticalAlignment="Top"
-           Margin="200,100,0,0"/>
-        </Grid>
     </Grid>
 </Window>

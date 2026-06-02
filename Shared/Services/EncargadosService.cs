@@ -12,13 +12,13 @@ namespace Shared.Services
 
         public EncargadosService()
         {
-            _httpClient = new HttpClient { BaseAddress = new System.Uri("https://t1tkm4dk-7153.usw3.devtunnels.ms/api/Encargados") };
+            _httpClient = new HttpClient { BaseAddress = new System.Uri("https://t1km4dk-7035.usw3.devtunnels.ms/api/Encargados") };
         }
 
         // ¡Y AQUÍ! Le faltaba el "public" al método
-        public async Task<Encargados> Login(string username, string password)
+        public async Task<Encargados> Login(string nombre, string password)
         {
-            var response = await _httpClient.PostAsJsonAsync("login", new { username, password });
+            var response = await _httpClient.PostAsJsonAsync("login", new { nombre, password });
 
             if (response.IsSuccessStatusCode)
             {

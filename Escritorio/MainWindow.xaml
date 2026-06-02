@@ -13,7 +13,7 @@
         <PasswordBox x:Name="txtContrasenia" HorizontalAlignment="Left" Margin="123,230,0,0" VerticalAlignment="Top" Width="336"/>
         <Label Content="Ingrese un Usuario y Contraseña validos" HorizontalAlignment="Center" Margin="0,53,0,0" VerticalAlignment="Top"/>
         <Label Content="Ingresar Usuario" HorizontalAlignment="Left" Margin="135,120,0,0" VerticalAlignment="Top"/>
-        <Label Content="Ingresar la Contrsaeña" HorizontalAlignment="Left" Margin="135,0,0,0" VerticalAlignment="Center"/>
+        <Label Content="Ingresar la Contraseña" HorizontalAlignment="Left" Margin="135,0,0,0" VerticalAlignment="Center"/>
         <Label 
             Margin="10,20,10,100"
             HorizontalAlignment="Center"
