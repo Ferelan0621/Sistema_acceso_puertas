@@ -83,7 +83,7 @@ namespace Escritorio.Windows
                 });
             }
             // Validamos el tópico de la puerta
-            /*if (topic == MqttServices.doorTopic)
+            if (topic == MqttServices.doorTopic)
             {
                 // Convertimos todo el mensaje a minúsculas para evitar errores de formato
                 string mensajeLimpio = payload.ToLower();
@@ -103,7 +103,7 @@ namespace Escritorio.Windows
                         imgPuertaCerradaLab2.Visibility = Visibility.Visible;
                     }
                 });
-            }*/
+            }
         }
 
         private void btnNuevolaboratorio_Click(object sender, RoutedEventArgs e)
