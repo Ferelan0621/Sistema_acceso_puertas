@@ -7,7 +7,7 @@ using Shared.Services;
 
 namespace Escritorio.Data
 {
-    class EscritorioMQTT
+    public class EscritorioMQTT
     {
         private IMqttClient mqttClient;
         

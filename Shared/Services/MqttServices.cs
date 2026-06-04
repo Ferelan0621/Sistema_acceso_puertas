@@ -14,6 +14,7 @@ public static class MqttServices
     public static string abrir = "UPT/LABORATORIOS";
     public static string peticion = "casa/peticion/control";
     public static string statusTopic = "UPT/LABORATORIOS/status";
-    public static string conexionMovil = "peticion/movil/conexion";
+    public static string conexion = "peticion/movil/conexion";
+    public static string respuesta = "peticion/movil/respuesta";
     public static string doorTopic = "UPT/LABORATORIOS/doorStatus";
 }
