@@ -73,5 +73,11 @@ namespace Escritorio.Windows
             ventanaHistorial.Show();
             this.Hide();
         }
+        private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
+        {
+            InicioWindow ventanaInicio = new InicioWindow();
+            ventanaInicio.Show();
+            this.Hide();
+        }
     }
 }

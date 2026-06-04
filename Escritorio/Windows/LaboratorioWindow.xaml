@@ -16,5 +16,13 @@
 
         <Image x:Name="imgPuertaAbiertaLab2" Source="pack://application:,,,/Images/Puerta_abierta.png" HorizontalAlignment="Left" Margin="160,71,0,0" VerticalAlignment="Top" Height="50" Width="50"/>
         <Image x:Name="imgPuertaCerradaLab2" Source="pack://application:,,,/Images/Puerta_cerrada.png" HorizontalAlignment="Left" Margin="160,71,0,0" VerticalAlignment="Top" Height="50" Width="50"/>
+        <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" Margin="20,26,0,0" VerticalAlignment="Top" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
+            <Button.Template>
+            <ControlTemplate TargetType="Button">
+                <ContentPresenter />
+                </ControlTemplate>
+                </Button.Template>
+                <Image Source="pack://application:,,,/Images/Regresar.png" Stretch="Uniform" />
+        </Button>
     </Grid>
 </Window>

@@ -31,8 +31,6 @@ namespace Escritorio
             lblFaltausuario.Visibility = Visibility.Hidden;
             lblFaltacontrasenia.Visibility = Visibility.Hidden;*/
 
-            string usuario = txtUsuario.Text.ToString();
-
             string usuarioCampo = txtUsuario.Text.Trim();
             string contraseniaCampo = txtContrasenia.Password.Trim();
             bool datosCompletos = true;
@@ -78,8 +76,8 @@ namespace Escritorio
                     MessageBox.Show($"¡El servidor no responde! ¿Encendiste la API? Error: {ex.Message}", "Fallo de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }*/
-            InicioWindow ventaInicio = new InicioWindow(usuarioCampo);
-            ventaInicio.Show();
+            InicioWindow ventanaInicio = new InicioWindow();
+            ventanaInicio.Show();
             this.Hide();
         }
 

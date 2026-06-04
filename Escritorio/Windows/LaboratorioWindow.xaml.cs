@@ -199,5 +199,11 @@ namespace Escritorio.Windows
                 MessageBox.Show("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
+        {
+            InicioWindow ventanaInicio = new InicioWindow();
+            ventanaInicio.Show();
+            this.Hide();
+        }
     }
 }

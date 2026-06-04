@@ -17,10 +17,10 @@ namespace Escritorio.Windows
     /// </summary>
     public partial class InicioWindow : Window
     {
-        public InicioWindow(string usuario)
+        public InicioWindow()
         {
             InitializeComponent();
-            lblUsuario.Content = "Bienvenido " + usuario;
+            lblUsuario.Content = "Bienvenido a la aplicación";
         }
 
         private void btnLaboratorio_Click(object sender, RoutedEventArgs e)
