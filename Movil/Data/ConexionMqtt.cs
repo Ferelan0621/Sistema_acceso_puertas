@@ -6,10 +6,12 @@ using Shared.Services;
 namespace Movil.Data
 {
     public class ConexionMqtt
-    {   
-        
+    {
+
         private IMqttClient mqttClient;
-       
+
+        // Evento para notificar a la UI cuando llega un mensaje
+        public event Action<string, string> MensajeRecibido;
 
         public async Task ConectarAsync()
         {
@@ -23,42 +25,42 @@ namespace Movil.Data
                 //.WithClientId("ApiCsharpCliente_" + Guid.NewGuid().ToString().Substring(0, 5)) // ID único
 
                 var options = new MqttClientOptionsBuilder()
-                    .WithClientId("ClientApp") // ID único
+                    .WithClientId("ClientApp" + Guid.NewGuid().ToString().Substring(0, 5)) // ID único
                     .WithTcpServer(MqttServices.host, MqttServices.port)
                     .WithCredentials(MqttServices.Username, MqttServices.Pasword)
                     .WithCleanSession()
                     .Build();
 
+                mqttClient.ApplicationMessageReceivedAsync += e =>
+                {
+                    string topic = e.ApplicationMessage.Topic;
+                    string payload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+                    // Disparar el evento hacia la ventana
+                    MensajeRecibido?.Invoke(topic, payload);
+                    return Task.CompletedTask;
+                };
+
                 await mqttClient.ConnectAsync(options);
             }
             catch (Exception ex)
             {
-                
+                throw; //Colocar el error para atraparlo en la ventana
             }
         }
-        //    // 🟢 Evento: Detecta si se conectó con éxito
-        //    mqttClient.ConnectedAsync += e =>
-        //    {
-        //        Console.WriteLine("\n▲ [MQTT] ¡Conectado exitosamente al broker Mosquitto!\n");
-        //        return Task.CompletedTask;
-        //    };
 
-        //    // 🔴 Evento: Detecta si se desconectó o falló la conexión
-        //    mqttClient.DisconnectedAsync += e =>
-        //    {
-        //        Console.WriteLine($"\n▼ [MQTT] Desconectado del broker. Razón: {e.Reason}\n");
-        //        return Task.CompletedTask;
-        //    };
-        //}
-        //public async Task ConectarAsync()
-        //{
-        //    if (!mqttClient.IsConnected)
-        //    {
-        //        await mqttClient.ConnectAsync(_options, CancellationToken.None);
-        //    }
+        public async Task SuscribirseAsync(string topico)
+        {
+            if (mqttClient != null && mqttClient.IsConnected)
+            {
+                var mqttSubscribeOptions = new MqttClientSubscribeOptionsBuilder()
+                    .WithTopicFilter(f => { f.WithTopic(topico); })
+                    .Build();
 
+                await mqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+            }
+        }
 
-        //}
         public async Task PublicarMensajeAsync(string topico, string mensaje)
         {
             await ConectarAsync();
@@ -70,24 +72,5 @@ namespace Movil.Data
 
             await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
         }
-        //JsonAbrir jsonla2 = new JsonAbrir
-        //{ d = "3", c = "abrir" };
-
-        //string jsonString = JsonSerializer.Serialize(jsonla2);
-        //_mqtt.PublicarMensajeAsync(MqttServices.abrir, jsonString);
-
-        //private async void conectarMqtt()
-        //{
-        //    try
-        //    {
-        //        await conexion.ConectarAsync();
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        string texto = "no jalo padrino";
-        //        txtUsuario.Text = texto;
-        //    }
-        //}
-
     }
 }
