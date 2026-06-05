@@ -8,6 +8,6 @@ namespace Shared.Services
 {
     public class ConexionHTTP
     {
-        public const string BaseUrl = "https://t1tkm4dk-7035.usw3.devtunnels.ms/api";
+        public const string BaseUrl = "https://t1tkm4dk-7035.usw3.devtunnels.ms/api/";
     }
 }
