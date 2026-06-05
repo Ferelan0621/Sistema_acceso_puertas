@@ -29,28 +29,27 @@ public partial class IniciarSesion : ContentPage
 
     private async void btnIniciarsesion_Clicked(object sender, EventArgs e)
     {
-        //if (string.IsNullOrWhiteSpace(etUsuario.Text) || string.IsNullOrWhiteSpace(etPasword.Text))
-        //{
-        //    await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
-        //    return;
-        //}
+        if (string.IsNullOrWhiteSpace(etUsuario.Text) || string.IsNullOrWhiteSpace(etPasword.Text))
+        {
+            await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
+            return;
+        }
 
-        //// 2. Llamar al endpoint a través de tu ApiService
-        //Usuarios usuarioLogueado = await _apiService.LoginAsync(etUsuario.Text, etPasword.Text);
+        // 2. Llamar al endpoint a través de tu ApiService
+        Usuarios usuarioLogueado = await _apiService.LoginAsync(etUsuario.Text, etPasword.Text);
 
-        //// 3. Validar la respuesta del API
-        //if (usuarioLogueado != null)
-        //{
-        //    await DisplayAlert("¡Bienvenido!", $"Hola {usuarioLogueado.Nombre}", "OK");
+        // 3. Validar la respuesta del API
+        if (usuarioLogueado != null)
+        {
+            await DisplayAlert("¡Bienvenido!", $"Hola {usuarioLogueado.Nombre}", "OK");
 
-        //    // Aquí puedes navegar a tu pantalla principal (ejemplo)
-        //    // await Shell.Current.GoToAsync("//MainPage");
-        //}
-        //else
-        //{
-        //    await DisplayAlert("Error de acceso", "Clave IMSSEMYM o contraseña incorrectas.", "OK");
-        //}
-        await Shell.Current.GoToAsync("//mainapp");
+            // Aquí puedes navegar a tu pantalla principal (ejemplo)
+             await Shell.Current.GoToAsync("//mainapp0");
+        }
+        else
+        {
+            await DisplayAlert("Error de acceso", "Clave IMSSEMYM o contraseña incorrectas.", "OK");
+        }
     }
 
 

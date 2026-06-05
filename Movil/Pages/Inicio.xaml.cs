@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.Input;
 using Movil.Data;
 using Shared.Models;
 using Shared.Services;
@@ -46,6 +45,8 @@ public partial class Inicio : ContentPage
     private async void Prueba_Clicked(object sender, EventArgs e)
     {
 
+       
+
         // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
         if (miBroker == null)
         {
@@ -59,14 +60,18 @@ public partial class Inicio : ContentPage
             await miBroker.PublicarMensajeAsync(MqttServices.conexion, "abrir");
 
             // Confirmación visual opcional
-            DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information");
+            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
+            {
+
+                Prueba.IsEnabled = false;
+                await Task.Delay(5000);
+                Prueba.IsEnabled = true;
+            }
         }
         catch (Exception ex)
         {
             // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
             DisplayAlertAsync("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", "OK", "Error");
         }
-
-
     }   
 }

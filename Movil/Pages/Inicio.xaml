@@ -2,46 +2,14 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:Movil.Converters"
-             xmlns:viewmodels="clr-namespace:Movil.ViewModels"
              x:Class="Movil.Pages.Inicio">
-
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:EstadoToColorConverter x:Key="EstadoColorConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
-
-    <Grid Padding="20">
-        <CollectionView ItemsSource="{Binding Laboratorios}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 10" 
-                            Stroke="#E1E1E1"
-                            Padding="15" 
-                            Margin="0,0,0,15"
-                            BackgroundColor="White">
-                        
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer 
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:InicioViewModel}}, Path=IrAPrestamoCommand}" 
-                                CommandParameter="{Binding .}" />
-                        </Border.GestureRecognizers>
-
-                        <Grid ColumnDefinitions="Auto, *, Auto">
-                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="{Binding Nombre}" FontSize="18" FontAttributes="Bold" TextColor="Black" />
-                                <Label Text="{Binding Edificio}" FontSize="14" TextColor="Gray" />
-                            </VerticalStackLayout>
-
-                            <Ellipse Grid.Column="2" 
-                                     WidthRequest="20" 
-                                     HeightRequest="20" 
-                                     VerticalOptions="Center"
-                                     Fill="{Binding Estado, Converter={StaticResource EstadoColorConverter}}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
-</ContentPage>
+    <VerticalStackLayout>
+        <Button
+        x:Name="Prueba"
+        Text="pucale"
+        Clicked="Prueba_Clicked"
+        Margin="10"
+        
+        />
+    </VerticalStackLayout>
+</ContentPage> 

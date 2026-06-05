@@ -26,15 +26,20 @@ namespace Movil.Services
         public async Task<Usuarios> LoginAsync(string nombre, string password)
         {
             var loginData = new { Clave_ISSEMYM = nombre, Password = password };
-            var response = await _httpClient.PostAsJsonAsync("/Usuarios/Login", loginData);
+            var response = await _httpClient.PostAsJsonAsync("Usuarios/Login", loginData);
 
             if (response.IsSuccessStatusCode)
+            {
 
                 return await response.Content.ReadFromJsonAsync<Usuarios>();
 
-
-            return null;
+            }
+            else
+            {
+                return null;
+            }           
         }
+
 
         // 2. CREAR USUARIO
         // 4. RECORDAR / RESTABLECER CONTRASEÑA
