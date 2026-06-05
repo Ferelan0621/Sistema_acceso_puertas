@@ -1,5 +1,6 @@
 ﻿using Shared.Models;
 using Shared.Services;
+using System.Buffers.Text;
 using System.Net.Http.Json;
 
 namespace Movil.Services
@@ -10,6 +11,7 @@ namespace Movil.Services
         // o 10.0.2.2 si usas el emulador de Android.
         private readonly HttpClient _httpClient;
         private const string BaseUrl = ConexionHTTP.BaseUrl;
+
 
         public ApiService()
         {
@@ -23,22 +25,22 @@ namespace Movil.Services
         }
 
         // 1. LOGIN
-        public async Task<Usuarios> LoginAsync(string nombre, string password)
-        {
-            var loginData = new { Clave_ISSEMYM = nombre, Password = password };
-            var response = await _httpClient.PostAsJsonAsync("Usuarios/Login", loginData);
+        //public async Task<Usuarios> LoginAsync(string nombre, string password)
+        //{
+        //    var loginData = new { Clave_ISSEMYM = nombre, Password = password };
+        //    var response = await _httpClient.PostAsJsonAsync("Usuarios/Login", loginData);
 
-            if (response.IsSuccessStatusCode)
-            {
+        //    if (response.IsSuccessStatusCode)
+        //    {
 
-                return await response.Content.ReadFromJsonAsync<Usuarios>();
+        //        return await response.Content.ReadFromJsonAsync<Usuarios>();
 
-            }
-            else
-            {
-                return null;
-            }           
-        }
+        //    }
+        //    else
+        //    {
+        //        return null;
+        //    }           
+        //}
 
 
         // 2. CREAR USUARIO
@@ -64,5 +66,69 @@ namespace Movil.Services
 
             return null;
         }
+
+
+
+
+
+        public async Task<bool> IniciarSesionAsync(string clave, string password)
+        {
+            try
+            {
+                // Creamos el objeto con los datos del formulario
+                var datosLogin = new
+                {
+                    Nombre = clave,
+                    Password = password
+                };
+
+                // Hacemos la petición POST enviando el JSON en el cuerpo
+                var response = await _httpClient.PostAsJsonAsync("Encargados/login", datosLogin);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // El servidor respondió con 200 OK
+                    return true;
+                }
+                else
+                {
+                    // Aquí puedes leer el error si el servidor mandó un BadRequest o Unauthorized
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"Error del servidor: {errorContent}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Aquí atrapas fallas de red, Dev Tunnel caído, o temas de SSL
+                System.Diagnostics.Debug.WriteLine($"Error de conexión: {ex.Message}");
+                return false;
+            }
+       }
+
+        //private async void OnRegistrarClicked(object sender, EventArgs e)
+        //{
+        //    // 1. Crear el objeto con los datos de las cajas de texto
+        //    var nuevoUsuario = new Usuarios
+        //    {
+        //        Nombre = txtNombre.Text,
+        //        Clave_IMSSEMYM = txtClave.Text,
+        //        Password = txtPassword.Text
+        //    };
+
+        //    // 2. Enviar al API
+        //    bool seRegistro = await _apiService.RegistrarUsuarioAsync(nuevoUsuario);
+
+        //    // 3. Evaluar resultado
+        //    if (seRegistro)
+        //    {
+        //        await DisplayAlert("Éxito", "Usuario registrado correctamente.", "OK");
+        //        await Navigation.PopAsync(); // Regresar a la pantalla anterior (Login)
+        //    }
+        //    else
+        //    {
+        //        await DisplayAlert("Error", "No se pudo registrar. La clave ya existe o hubo un problema.", "OK");
+        //    }
+        //}
     }
 }

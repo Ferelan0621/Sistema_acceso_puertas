@@ -3,10 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Movil.Pages.Registro"
              Title="Registro">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+    <VerticalStackLayout Padding="20" Spacing="15">
+        <Entry x:Name="ClaveInput" Placeholder="Ingresa tu Clave IMSSEMYM" />
+        <Entry x:Name="PasswordInput" Placeholder="Contraseña" IsPassword="True" />
+
+        <Label Text="¿Qué rol tendrás?" />
+        <Picker x:Name="RolPicker"
+            Title="Selecciona un rol"/>
+        <!--ItemDisplayBinding="Nombre" />-->
+
+        <Button x:Name="Registrar" Text="Registrar" Clicked="Registrar_Clicked" />
     </VerticalStackLayout>
 </ContentPage>

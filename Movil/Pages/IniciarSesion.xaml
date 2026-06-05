@@ -6,11 +6,11 @@
     <Grid>
         <VerticalStackLayout>
         <Label
-    x:Name="txtUsuario"
+    x:Name="txtClave"
     Text="Usuario"
     />
         <Entry Placeholder=""
-      x:Name="etUsuario"/>
+      x:Name="etClave"/>
 
         <Label
     x:Name="txtPasword"
@@ -43,5 +43,8 @@
                 </Label.GestureRecognizers>
             </Label>
         </VerticalStackLayout>
+        <ActivityIndicator x:Name="LoadingIndicator" 
+                           IsRunning="False" 
+                           HorizontalOptions="Center" />
     </Grid>
 </ContentPage>

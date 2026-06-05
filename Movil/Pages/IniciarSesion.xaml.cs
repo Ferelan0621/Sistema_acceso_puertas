@@ -8,14 +8,14 @@ namespace Movil.Pages;
 
 public partial class IniciarSesion : ContentPage
 {
-    private readonly ApiService _apiService = new ApiService();
+    private readonly ApiService _apiService;
 
 
     public IniciarSesion()
     {
 
         InitializeComponent();
-
+        _apiService = new ApiService();
 
 
     }
@@ -29,26 +29,71 @@ public partial class IniciarSesion : ContentPage
 
     private async void btnIniciarsesion_Clicked(object sender, EventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(etUsuario.Text) || string.IsNullOrWhiteSpace(etPasword.Text))
+        //if (string.IsNullOrWhiteSpace(etUsuario.Text) || string.IsNullOrWhiteSpace(etPasword.Text))
+        //{
+        //    await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
+        //    return;
+        //}
+
+        //// 2. Llamar al endpoint a través de tu ApiService
+        //Usuarios usuarioLogueado = await _apiService.LoginAsync(etUsuario.Text, etPasword.Text);
+
+        //// 3. Validar la respuesta del API
+        //if (usuarioLogueado != null)
+        //{
+        //    await DisplayAlert("¡Bienvenido!", $"Hola {usuarioLogueado.Nombre}", "OK");
+
+        //    // Aquí puedes navegar a tu pantalla principal (ejemplo)
+        //     await Shell.Current.GoToAsync("//mainapp0");
+        //}
+        //else
+        //{
+        //    await DisplayAlert("Error de acceso", "Clave IMSSEMYM o contraseña incorrectas.", "OK");
+        //}
+        // 1. Recuperamos los datos de las cajas de texto
+        string clave = etClave.Text?.Trim();
+        string password = etPasword.Text?.Trim();
+
+        // 2. Validaciones básicas antes de gastar datos/red
+        if (string.IsNullOrEmpty(clave) || string.IsNullOrEmpty(password))
         {
-            await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
+            await DisplayAlert("Campos Vacíos", "Por favor, escribe tu Clave y Contraseña.", "OK");
             return;
         }
 
-        // 2. Llamar al endpoint a través de tu ApiService
-        Usuarios usuarioLogueado = await _apiService.LoginAsync(etUsuario.Text, etPasword.Text);
-
-        // 3. Validar la respuesta del API
-        if (usuarioLogueado != null)
+        try
         {
-            await DisplayAlert("¡Bienvenido!", $"Hola {usuarioLogueado.Nombre}", "OK");
+            // 3. Bloqueamos el botón y encendemos el spinner de carga
+            btnIniciarsesion.IsEnabled = false;
+            LoadingIndicator.IsRunning = true;
 
-            // Aquí puedes navegar a tu pantalla principal (ejemplo)
-             await Shell.Current.GoToAsync("//mainapp0");
+            // 4. Llamamos a nuestro servicio que hace el POST al Dev Tunnel
+            bool loginExitoso = await _apiService.IniciarSesionAsync(clave, password);
+
+            if (loginExitoso)
+            {
+                // ¡Éxito! Aquí lo mandas a la pantalla principal de tu app
+                await DisplayAlert("¡Bienvenido!", "Inicio de sesión correcto.", "OK");
+                await Shell.Current.GoToAsync("//mainapp");
+                // Ejemplo de navegación a otra página:
+                // App.Current.MainPage = new NavigationPage(new HomePage());
+            }
+            else
+            {
+                // El servidor regresó 401 Unauthorized o falló la validación
+                await DisplayAlert("Error", "Clave ISSEMYM o contraseña incorrectas.", "OK");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await DisplayAlert("Error de acceso", "Clave IMSSEMYM o contraseña incorrectas.", "OK");
+            // Por si el servidor está apagado o el Dev Tunnel expiró
+            await DisplayAlert("Error de Conexión", $"No se pudo conectar al servidor: {ex.Message}", "OK");
+        }
+        finally
+        {
+            // 5. Pase lo que pase, volvemos a activar el botón y apagamos el spinner
+            LoadingIndicator.IsRunning = false;
+            btnIniciarsesion.IsEnabled = true;
         }
     }
 
