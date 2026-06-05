@@ -8,5 +8,13 @@
         Title="PeticionesWindow" Height="450" Width="800">
     <Grid>
         <Button x:Name="btnHistorialpeticiones" Content="Historial de Peticiones" HorizontalAlignment="Left" Margin="621,377,0,0" VerticalAlignment="Top" Click="btnHistorialpeticiones_Click"/>
+        <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" Margin="20,26,0,0" VerticalAlignment="Top" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Button.Template>
+            <Image Source="pack://application:,,,/Images/Regresar.png" Stretch="Uniform" />
+        </Button>
     </Grid>
 </Window>
