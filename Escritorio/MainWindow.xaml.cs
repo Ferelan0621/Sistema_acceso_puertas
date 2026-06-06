@@ -12,6 +12,7 @@ using System.Windows.Shapes;
 using Shared.Services;
 using Shared.Models;
 using System.Text.Json;
+using Escritorio.Data;
 
 namespace Escritorio
 {
@@ -20,16 +21,19 @@ namespace Escritorio
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        private readonly ApiService _apiService;
         public MainWindow()
         {
             InitializeComponent();
+            _apiService = new ApiService();
         }
 
         private async void btnIniciar_Click(object sender, RoutedEventArgs e)
         {
             /* Ocultar etiquetas de error al inicio por si acaso
             lblFaltausuario.Visibility = Visibility.Hidden;
-            lblFaltacontrasenia.Visibility = Visibility.Hidden;*/
+            lblFaltacontrasenia.Visibility = Visibility.Hidden;
 
             string usuarioCampo = txtUsuario.Text.Trim();
             string contraseniaCampo = txtContrasenia.Password.Trim();
@@ -45,7 +49,7 @@ namespace Escritorio
                 lblFaltacontrasenia.Visibility = Visibility.Visible;
                 datosCompletos = false;
             }
-            /*if (datosCompletos)
+            if (datosCompletos)
             {
                 try
                 {
@@ -60,7 +64,7 @@ namespace Escritorio
                     {
                         // ¡Éxito! Ahora sí lo dejamos pasar
                         // Pásale el objeto usuarioValido si InicioWindow lo necesita
-                        InicioWindow ventaInicio = new InicioWindow(usuarioCampo);
+                        InicioWindow ventaInicio = new InicioWindow();
                         ventaInicio.Show();
                         this.Hide();
                     }
@@ -76,10 +80,43 @@ namespace Escritorio
                     MessageBox.Show($"¡El servidor no responde! ¿Encendiste la API? Error: {ex.Message}", "Fallo de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }*/
-            InicioWindow ventanaInicio = new InicioWindow();
-            ventanaInicio.Show();
+            string usuario = txtUsuario.Text.Trim();
+            string password = txtContrasenia.Password.Trim();
+
+            // 2. Validaciones básicas antes de gastar datos/red
+            /*if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(password))
+            {
+                lblFaltausuario.Visibility = Visibility.Visible;
+                lblFaltacontrasenia.Visibility = Visibility.Visible;
+            }
+
+            try
+            {
+                // 4. Llamamos a nuestro servicio que hace el POST al Dev Tunnel
+                bool loginExitoso = await _apiService.IniciarSesionAsync(usuario, password);
+
+                if (loginExitoso)
+                {
+                    InicioWindow ventaInicio = new InicioWindow();
+                    ventaInicio.Show();
+                    this.Hide();
+                }
+                else
+                {
+                    // El servidor regresó 401 Unauthorized o falló la validación
+                    MessageBox.Show("¡Usuario o contraseña incorrectos! Revisa bien tus datos.", "Error de Autenticación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Por si el servidor está apagado o el Dev Tunnel expiró
+                MessageBox.Show($"¡El servidor no responde! ¿Encendiste la API? Error: {ex.Message}", "Fallo de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
+            }*/
+            InicioWindow ventaInicio = new InicioWindow();
+            ventaInicio.Show();
             this.Hide();
         }
+        
 
         private void btnRegistrarse_Click(object sender, RoutedEventArgs e)
         {
