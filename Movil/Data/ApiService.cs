@@ -2,6 +2,7 @@
 using Shared.Services;
 using System.Buffers.Text;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Movil.Services
 {
@@ -130,5 +131,34 @@ namespace Movil.Services
         //        await DisplayAlert("Error", "No se pudo registrar. La clave ya existe o hubo un problema.", "OK");
         //    }
         //}
+
+        public async Task<List<RolDto>> ObtenerRolesAsync()
+        {
+            try
+            {
+                var respuesta = await _cliente.GetStringAsync("api/usuarios/roles");
+                return JsonSerializer.Deserialize<List<RolDto>>(respuesta, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch
+            {
+                return new List<RolDto>(); // Si falla, devuelve lista vacía
+            }
+        }
+
+        public async Task<bool> RegistrarUsuarioAsync(RegistroUsuarioDTO registro)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(registro);
+                var contenido = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var respuesta = await _cliente.PostAsync("api/usuarios/registrar", contenido);
+                return respuesta.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

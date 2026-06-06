@@ -11,13 +11,13 @@ namespace Shared.Models
         // Propiedad de navegación hacia el usuario que la creó
         public Usuarios Usuario { get; set; } = null!;
 
-        public int LaboratodioID { get; set; }
-        public Laboratorios Laboratorios { get; set; }=null!;
+        public int LaboratorioID { get; set; }
+        public Laboratorios Laboratorio { get; set; } = null!;
 
 
-        public DateTime Fecha_Prestamo { get; set; }
-        public DateTime Hora_Inicio { get; set; }   
-        public DateTime Hora_Final { get; set; }    
+        public DateTime FechaPrestamo { get; set; }
+        public DateTime HoraInicio { get; set; }
+        public DateTime HoraFinal { get; set; }
         public int EncargadoID { get; set; }
         public Encargados Encargado { get; set; } = null!;
 
