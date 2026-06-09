@@ -65,7 +65,7 @@ namespace Escritorio.Windows
             // Protección por si el ESP32 manda algo vacío
             if (string.IsNullOrEmpty(payload)) return;
 
-            // 1. Validamos el tópico de estado de conexión de la app
+            // Validamos el tópico de estado de conexión de la app
             if (topic == MqttServices.statusTopic)
             {
                 Dispatcher.Invoke(() =>
