@@ -7,7 +7,7 @@
         <VerticalStackLayout>
         <Label
     x:Name="txtClave"
-    Text="Usuario"
+    Text="Clave ISSEMYM"
     />
         <Entry Placeholder=""
       x:Name="etClave"/>
@@ -45,6 +45,6 @@
         </VerticalStackLayout>
         <ActivityIndicator x:Name="LoadingIndicator" 
                            IsRunning="False" 
-                           HorizontalOptions="Center" />
+                           HorizontalOptions="Center"  />
     </Grid>
 </ContentPage>
