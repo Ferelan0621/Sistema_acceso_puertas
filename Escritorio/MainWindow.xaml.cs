@@ -53,10 +53,10 @@ namespace Escritorio
             {
                 try
                 {
-                    // 1. Instanciamos el servicio que te dije que crearas antes
+                    // Instanciamos el servicio que te dije que crearas antes
                     EncargadosService servicio = new EncargadosService();
 
-                    // 2. Llamamos a la API y esperamos la respuesta
+                    // Llamamos a la API y esperamos la respuesta
                     Encargados usuarioValido = await servicio.Login(usuarioCampo, contraseniaCampo);
 
                     // 3. Verificamos si la API nos devolvió datos (credenciales correctas)
