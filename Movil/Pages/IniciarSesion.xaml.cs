@@ -72,6 +72,7 @@ public partial class IniciarSesion : ContentPage
 
             if (loginExitoso)
             {
+
                 // ¡Éxito! Aquí lo mandas a la pantalla principal de tu app
                 await DisplayAlert("¡Bienvenido!", "Inicio de sesión correcto.", "OK");
                 await Shell.Current.GoToAsync("//mainapp");

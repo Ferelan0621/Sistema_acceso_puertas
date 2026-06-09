@@ -2,6 +2,7 @@
 using Shared.Services;
 using System.Buffers.Text;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Movil.Services
 {
@@ -24,51 +25,18 @@ namespace Movil.Services
             _httpClient = new HttpClient(handler) { BaseAddress = new Uri(BaseUrl) };
         }
 
-        // 1. LOGIN
-        //public async Task<Usuarios> LoginAsync(string nombre, string password)
-        //{
-        //    var loginData = new { Clave_ISSEMYM = nombre, Password = password };
-        //    var response = await _httpClient.PostAsJsonAsync("Usuarios/Login", loginData);
+     
 
-        //    if (response.IsSuccessStatusCode)
-        //    {
-
-        //        return await response.Content.ReadFromJsonAsync<Usuarios>();
-
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }           
-        //}
-
-
-        // 2. CREAR USUARIO
         // 4. RECORDAR / RESTABLECER CONTRASEÑA
         public async Task<bool> RecuperarContrasenaAsync(string claveImssemym, string nuevaPassword)
         {
-            var datosRecuperacion = new { Clave_ISSEMYM = claveImssemym, NuevaPassword = nuevaPassword };
+            var datosRecuperacion = new { ClaveISSEMYM = claveImssemym, NuevaPassword = nuevaPassword };
 
             // Apuntamos a la ruta "Usuarios/Recuperar" que creamos en el API
             var response = await _httpClient.PostAsJsonAsync("/Usuarios/Recuperar", datosRecuperacion);
 
             return response.IsSuccessStatusCode;
         }
-
-        public async Task<Usuarios> VerUserasync()
-        {
-            var response = await _httpClient.GetAsync("/Usuario");
-
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<Usuarios>();
-            }
-
-            return null;
-        }
-
-
-
 
 
         public async Task<bool> IniciarSesionAsync(string clave, string password)
@@ -78,12 +46,12 @@ namespace Movil.Services
                 // Creamos el objeto con los datos del formulario
                 var datosLogin = new
                 {
-                    Nombre = clave,
+                    ClaveISSEMYM = clave,
                     Password = password
                 };
 
                 // Hacemos la petición POST enviando el JSON en el cuerpo
-                var response = await _httpClient.PostAsJsonAsync("Encargados/login", datosLogin);
+                var response = await _httpClient.PostAsJsonAsync("Usuarios/login", datosLogin);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -105,30 +73,6 @@ namespace Movil.Services
                 return false;
             }
        }
-
-        //private async void OnRegistrarClicked(object sender, EventArgs e)
-        //{
-        //    // 1. Crear el objeto con los datos de las cajas de texto
-        //    var nuevoUsuario = new Usuarios
-        //    {
-        //        Nombre = txtNombre.Text,
-        //        Clave_IMSSEMYM = txtClave.Text,
-        //        Password = txtPassword.Text
-        //    };
-
-        //    // 2. Enviar al API
-        //    bool seRegistro = await _apiService.RegistrarUsuarioAsync(nuevoUsuario);
-
-        //    // 3. Evaluar resultado
-        //    if (seRegistro)
-        //    {
-        //        await DisplayAlert("Éxito", "Usuario registrado correctamente.", "OK");
-        //        await Navigation.PopAsync(); // Regresar a la pantalla anterior (Login)
-        //    }
-        //    else
-        //    {
-        //        await DisplayAlert("Error", "No se pudo registrar. La clave ya existe o hubo un problema.", "OK");
-        //    }
-        //}
+        
     }
 }

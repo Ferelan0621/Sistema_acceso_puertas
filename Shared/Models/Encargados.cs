@@ -8,9 +8,9 @@ namespace Shared.Models
     {
         public int ID { get; set; }
         public string Nombre { get; set; } = null!;
-        public string password { get; set; } = null!;
-        public string Estatus { get; set; }
+        public string Password { get; set; } = null!;
+        public required string Estatus { get; set; }
 
-        
+
     }
 }

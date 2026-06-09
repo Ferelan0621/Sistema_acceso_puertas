@@ -8,8 +8,8 @@ namespace Shared.Models
     {
         public int ID { get; set; }
         public string IDSerial { get; set; } = null!;
-        public string Nombre_Laboratorio { get; set; } = null!;
-        public int Edifico { get; set; }
+        public string NombreLaboratorio { get; set; } = null!;
+        public int Edificio { get; set; }
         public EstadoLaboratorio Estatus { get; set; }
 
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
