@@ -59,7 +59,7 @@ namespace Escritorio
                     // Llamamos a la API y esperamos la respuesta
                     Encargados usuarioValido = await servicio.Login(usuarioCampo, contraseniaCampo);
 
-                    // 3. Verificamos si la API nos devolvió datos (credenciales correctas)
+                    // Verificamos si la API nos devolvió datos (credenciales correctas)
                     if (usuarioValido != null)
                     {
                         // ¡Éxito! Ahora sí lo dejamos pasar
