@@ -83,7 +83,7 @@ namespace Escritorio
             string usuario = txtUsuario.Text.Trim();
             string password = txtContrasenia.Password.Trim();
 
-            // 2. Validaciones básicas antes de gastar datos/red
+            // Validaciones básicas antes de gastar datos/red
             /*if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(password))
             {
                 lblFaltausuario.Visibility = Visibility.Visible;
@@ -92,7 +92,7 @@ namespace Escritorio
 
             try
             {
-                // 4. Llamamos a nuestro servicio que hace el POST al Dev Tunnel
+                // Llamamos a nuestro servicio que hace el POST al Dev Tunnel
                 bool loginExitoso = await _apiService.IniciarSesionAsync(usuario, password);
 
                 if (loginExitoso)
@@ -117,13 +117,6 @@ namespace Escritorio
             this.Hide();
         }
         
-
-        private void btnRegistrarse_Click(object sender, RoutedEventArgs e)
-        {
-            RegistrarseWindow ventanaRegistrarse = new RegistrarseWindow();
-            ventanaRegistrarse.Show();
-            this.Hide();
-        }
         private void lblContrasenia(object sender, RoutedEventArgs e)
         {
             RecuperarWindow ventanaRecuperar = new RecuperarWindow();

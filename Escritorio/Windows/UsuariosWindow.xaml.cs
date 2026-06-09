@@ -21,5 +21,11 @@ namespace Escritorio.Windows
         {
             InitializeComponent();
         }
+        private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
+        {
+            InicioWindow ventanaInicio = new InicioWindow();
+            ventanaInicio.Show();
+            this.Hide();
+        }
     }
 }

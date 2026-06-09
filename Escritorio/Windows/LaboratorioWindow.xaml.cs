@@ -106,13 +106,6 @@ namespace Escritorio.Windows
             }
         }
 
-        private void btnNuevolaboratorio_Click(object sender, RoutedEventArgs e)
-        {
-            NuevolaboratorioWindow ventaNuevoLab = new NuevolaboratorioWindow();
-            ventaNuevoLab.Show();
-            this.Hide();
-        }
-
         private async void btnLab2_Click(object sender, RoutedEventArgs e)
         {
             JsonAbrir jsonlab2 = new JsonAbrir

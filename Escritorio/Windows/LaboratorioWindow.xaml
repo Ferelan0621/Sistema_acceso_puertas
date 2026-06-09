@@ -9,7 +9,6 @@
     <Grid>
         <Ellipse Name="StatusIndicator" Width="20" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="150,0,0,25" Fill="Gray" />
         <TextBlock Name="lblStatus" Text="Esperando conexión..." VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,25" />
-        <Button x:Name="btnNuevolaboratorio" Content="Nuevo Laboratorio" HorizontalAlignment="Left" Margin="655,332,0,0" VerticalAlignment="Top" Click="btnNuevolaboratorio_Click"/>
         <Button x:Name="btnLab2" Content="Abrir Lab 2" HorizontalAlignment="Left" Margin="71,86,0,0" VerticalAlignment="Top" Click="btnLab2_Click"/>
         <Button x:Name="btnLab3" Content="Abrir Lab 3" HorizontalAlignment="Left" Margin="71,148,0,0" VerticalAlignment="Top" Click="btnLab3_Click"/>
         <Button x:Name="btnLab4" Content="Abrir Lab 4" HorizontalAlignment="Left" Margin="71,0,0,0" VerticalAlignment="Center" Click="btnLab4_Click"/>
