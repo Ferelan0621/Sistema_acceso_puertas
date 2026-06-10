@@ -1,4 +1,5 @@
-﻿using Shared.Models;
+﻿using Azure;
+using Shared.Models;
 using Shared.Services;
 using System.Buffers.Text;
 using System.Net.Http.Json;
@@ -33,7 +34,7 @@ namespace Movil.Services
             var datosRecuperacion = new { ClaveISSEMYM = claveImssemym, NuevaPassword = nuevaPassword };
 
             // Apuntamos a la ruta "Usuarios/Recuperar" que creamos en el API
-            var response = await _httpClient.PostAsJsonAsync("/Usuarios/Recuperar", datosRecuperacion);
+            var response = await _httpClient.PostAsJsonAsync("Usuarios/Recuperar", datosRecuperacion);
 
             return response.IsSuccessStatusCode;
         }
@@ -52,11 +53,24 @@ namespace Movil.Services
 
                 // Hacemos la petición POST enviando el JSON en el cuerpo
                 var response = await _httpClient.PostAsJsonAsync("Usuarios/login", datosLogin);
-
                 if (response.IsSuccessStatusCode)
                 {
-                    // El servidor respondió con 200 OK
-                    return true;
+                    // Deserializamos el objeto que retorna tu API
+                    var resultado = await response.Content.ReadFromJsonAsync<RespuestaLogin>();
+
+                    if (resultado != null)
+                    
+                        // 3. Almacenamos los datos según su sensibilidad
+
+                        // Guardamos el ID y Nombre (Datos básicos)
+                       Preferences.Default.Set("usuarioID", resultado.usuarioID);
+                       Preferences.Default.Set("nombreUser", resultado.nombreUser);
+
+                        // Si el login tuviera un Token, aquí usarías SecureStorage.Default.SetAsync(...)
+
+                        
+                    
+                        return true;
                 }
                 else
                 {
@@ -73,6 +87,33 @@ namespace Movil.Services
                 return false;
             }
        }
-        
+
+        public async Task<List<Laboratorios>> ObtenerLaboratoriosAsync()
+        {
+            try
+            {
+                // Configuración vital para que empate el camelCase del JSON con el PascalCase de C#
+                var opcionesJson = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var respuesta = await _httpClient.GetAsync("Laboratorios");
+                respuesta.EnsureSuccessStatusCode();
+
+                var contenido = await respuesta.Content.ReadAsStringAsync();
+                var elementos = JsonSerializer.Deserialize<List<Laboratorios>>(contenido, opcionesJson);
+
+                return elementos ?? new List<Laboratorios>();
+            }
+            catch (Exception ex)
+            {
+                // Aquí puedes manejar el error (ej. mostrar una alerta, logs)
+                Console.WriteLine($"Error en la API: {ex.Message}");
+                return new List<Laboratorios>();
+            }
+        }
+
+
     }
 }

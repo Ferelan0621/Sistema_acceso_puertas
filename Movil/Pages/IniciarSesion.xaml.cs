@@ -17,7 +17,10 @@ public partial class IniciarSesion : ContentPage
         InitializeComponent();
         _apiService = new ApiService();
 
+        string nombreDelUsuario = Preferences.Default.Get("nombreUser", "Usuario Invitado");
 
+        // Para obtener el ID:
+        int idUsuario = Preferences.Default.Get("usuarioID", 0);
     }
 
 

@@ -11,5 +11,7 @@
         Margin="10"
         
         />
+
+        <Label Text="{Binding NombreUsuario}"/>
     </VerticalStackLayout>
 </ContentPage> 
