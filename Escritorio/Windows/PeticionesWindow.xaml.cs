@@ -20,6 +20,7 @@ namespace Escritorio.Windows
     public partial class PeticionesWindow : Window
     {
         private EscritorioMQTT _clienteMqtt;
+        public string nombreEncargado;
         public PeticionesWindow()
         {
             InitializeComponent();
