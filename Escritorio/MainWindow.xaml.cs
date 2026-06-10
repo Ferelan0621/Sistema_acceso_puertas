@@ -53,13 +53,13 @@ namespace Escritorio
             {
                 try
                 {
-                    // 1. Instanciamos el servicio que te dije que crearas antes
+                    // Instanciamos el servicio que te dije que crearas antes
                     EncargadosService servicio = new EncargadosService();
 
-                    // 2. Llamamos a la API y esperamos la respuesta
+                    // Llamamos a la API y esperamos la respuesta
                     Encargados usuarioValido = await servicio.Login(usuarioCampo, contraseniaCampo);
 
-                    // 3. Verificamos si la API nos devolvió datos (credenciales correctas)
+                    // 0Verificamos si la API nos devolvió datos (credenciales correctas)
                     if (usuarioValido != null)
                     {
                         // ¡Éxito! Ahora sí lo dejamos pasar
@@ -83,7 +83,7 @@ namespace Escritorio
             string usuario = txtUsuario.Text.Trim();
             string password = txtContrasenia.Password.Trim();
 
-            // 2. Validaciones básicas antes de gastar datos/red
+            // Validaciones básicas antes de gastar datos/red
             /*if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(password))
             {
                 lblFaltausuario.Visibility = Visibility.Visible;
@@ -92,7 +92,7 @@ namespace Escritorio
 
             try
             {
-                // 4. Llamamos a nuestro servicio que hace el POST al Dev Tunnel
+                // Llamamos a nuestro servicio que hace el POST al Dev Tunnel
                 bool loginExitoso = await _apiService.IniciarSesionAsync(usuario, password);
 
                 if (loginExitoso)
@@ -117,13 +117,6 @@ namespace Escritorio
             this.Hide();
         }
         
-
-        private void btnRegistrarse_Click(object sender, RoutedEventArgs e)
-        {
-            RegistrarseWindow ventanaRegistrarse = new RegistrarseWindow();
-            ventanaRegistrarse.Show();
-            this.Hide();
-        }
         private void lblContrasenia(object sender, RoutedEventArgs e)
         {
             RecuperarWindow ventanaRecuperar = new RecuperarWindow();

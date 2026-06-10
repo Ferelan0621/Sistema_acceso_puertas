@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace Escritorio.Windows
 {
@@ -24,15 +25,23 @@ namespace Escritorio.Windows
     public partial class LaboratorioWindow : Window
     {
         private EscritorioMQTT miBroker;
+        private DispatcherTimer watchdogTimer;
+
         public LaboratorioWindow()
         {
             InitializeComponent();
-            // Inicializar el broker y comenzar la conexión
             miBroker = new EscritorioMQTT();
-
-            //Asignar el manejador de mensajes antes de conectar
             miBroker.MensajeRecibido += MensajeRecibido;
+
+            ConfigurarWatchdog();
             ConectarYSuscribir();
+        }
+
+        private void ConfigurarWatchdog()
+        {
+            watchdogTimer = new DispatcherTimer();
+            watchdogTimer.Interval = TimeSpan.FromSeconds(35);
+            watchdogTimer.Tick += WatchdogTimer_Tick;
         }
 
         private async void ConectarYSuscribir()
@@ -41,164 +50,94 @@ namespace Escritorio.Windows
             {
                 await miBroker.ConectarAsync();
                 await miBroker.SuscribirseAsync(MqttServices.statusTopic);
-                await miBroker.SuscribirseAsync(MqttServices.doorTopic);
+                // Suscripción con comodín para capturar todos los laboratorios
+                await miBroker.SuscribirseAsync(MqttServices.doorTopic + "/+");
             }
             catch (Exception ex)
             {
-                // Mostramos el mensaje y capturamos el resultado del botón presionado
-                MessageBoxResult resultado = MessageBox.Show(
-                    "Error al inicializar la conexión MQTT: " + ex.Message,
-                    "Error de Conexión",
-                    MessageBoxButton.RetryCancel,
-                    MessageBoxImage.Error);
-
-                // Si el usuario presionó "Reintentar", llamamos a este mismo método de nuevo
-                if (resultado == MessageBoxResult.Retry)
-                {
+                if (MessageBox.Show("Error al conectar MQTT: " + ex.Message, "Error", MessageBoxButton.RetryCancel) == MessageBoxResult.Retry)
                     ConectarYSuscribir();
-                }
             }
         }
 
         private void MensajeRecibido(string topic, string payload)
         {
-            // Protección por si el ESP32 manda algo vacío
             if (string.IsNullOrEmpty(payload)) return;
 
-            // 1. Validamos el tópico de estado de conexión de la app
+            // Estado del Gateway
             if (topic == MqttServices.statusTopic)
             {
                 Dispatcher.Invoke(() =>
                 {
-                    if (payload.ToLower().Contains("online"))
-                    {
-                        StatusIndicator.Fill = new SolidColorBrush(Colors.Green);
-                        lblStatus.Text = "Conectado";
-                    }
-                    else
-                    {
-                        StatusIndicator.Fill = new SolidColorBrush(Colors.Red);
-                        lblStatus.Text = "Desconectado";
-                    }
+                    bool online = payload.ToLower().Contains("online");
+                    StatusIndicator.Fill = new SolidColorBrush(online ? Colors.Green : Colors.Red);
+                    lblStatus.Text = online ? "Conectado" : "Desconectado";
                 });
+                return;
             }
-            // Validamos el tópico de la puerta
-            if (topic == MqttServices.doorTopic)
-            {
-                // Convertimos todo el mensaje a minúsculas para evitar errores de formato
-                string mensajeLimpio = payload.ToLower();
 
-                Dispatcher.Invoke(() =>
+            // Procesamiento de Puertas (Carril único)
+            if (topic.StartsWith(MqttServices.doorTopic))
+            {
+                string[] parts = topic.Split('/');
+                if (parts.Length > 3)
                 {
-                    // Evaluamos todas las posibles formas en que tu ESP32 pueda responder
-                    if (mensajeLimpio.Contains("abierta") || mensajeLimpio.Contains("true") || mensajeLimpio.Contains("1") || mensajeLimpio.Contains("open"))
+                    string idLab = parts[3];
+                    bool abierta = payload.ToLower().Contains("abierta") || payload.Contains("true") || payload.Contains("1") || payload.Contains("open");
+
+                    Dispatcher.Invoke(() =>
                     {
-                        imgPuertaCerradaLab2.Visibility = Visibility.Hidden;
-                        imgPuertaAbiertaLab2.Visibility = Visibility.Visible;
-                    }
-                    // Si el sensor detecta que se cerró
-                    else if (mensajeLimpio.Contains("cerrada") || mensajeLimpio.Contains("false") || mensajeLimpio.Contains("0") || mensajeLimpio.Contains("close"))
-                    {
-                        imgPuertaAbiertaLab2.Visibility = Visibility.Hidden;
-                        imgPuertaCerradaLab2.Visibility = Visibility.Visible;
-                    }
-                });
+                        switch (idLab)
+                        {
+                            case "LAB:02_S1":
+                                imgPuertaCerradaLab2.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
+                                imgPuertaAbiertaLab2.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
+                                break;
+                            case "LAB:03_S1":
+                                imgPuertaCerradaLab3.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
+                                imgPuertaAbiertaLab3.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
+                                break;
+                            case "LAB:04_S1":
+                                imgPuertaCerradaLab4.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
+                                imgPuertaAbiertaLab4.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
+                                break;
+                        }
+
+                        lblUltimoReporte.Text = $"Último reporte ({idLab}): {DateTime.Now:HH:mm:ss}";
+                        lblStatusLora.Text = "Red LoRa: Operativa";
+                        lblStatusLora.Foreground = new SolidColorBrush(Colors.Blue);
+
+                        watchdogTimer.Stop();
+                        watchdogTimer.Start();
+                    });
+                }
             }
         }
 
-        private void btnNuevolaboratorio_Click(object sender, RoutedEventArgs e)
+        private void WatchdogTimer_Tick(object sender, EventArgs e)
         {
-            NuevolaboratorioWindow ventaNuevoLab = new NuevolaboratorioWindow();
-            ventaNuevoLab.Show();
-            this.Hide();
+            watchdogTimer.Stop();
+            lblStatusLora.Text = "Nodo Inalcanzable (Pérdida de señal LoRa)";
+            lblStatusLora.Foreground = new SolidColorBrush(Colors.Red);
         }
 
-        private async void btnLab2_Click(object sender, RoutedEventArgs e)
+        private async Task EnviarComando(string idLab)
         {
-            JsonAbrir jsonlab2 = new JsonAbrir
-            { d = "2", c = "abrir" };
-
-            string Jsonlab2 = JsonSerializer.Serialize(jsonlab2);
-
-            // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
-            if (miBroker == null)
-            {
-                MessageBox.Show("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             try
             {
-                // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
-                await miBroker.PublicarMensajeAsync(MqttServices.abrir, Jsonlab2);
-
-                // Confirmación visual opcional
-                MessageBox.Show("La petición de apertura se envió correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                string json = JsonSerializer.Serialize(new JsonAbrir { d = idLab, c = "abrir" });
+                await miBroker.PublicarMensajeAsync(MqttServices.abrir, json);
             }
             catch (Exception ex)
             {
-                // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
-                MessageBox.Show("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error enviando comando: " + ex.Message);
             }
         }
 
-        private async void btnLab3_Click(object sender, RoutedEventArgs e)
-        {
-            JsonAbrir jsonlab3 = new JsonAbrir
-            { d = "3", c = "abrir" };
+        private async void btnLab2_Click(object sender, RoutedEventArgs e) => await EnviarComando("2");
+        private async void btnLab3_Click(object sender, RoutedEventArgs e) => await EnviarComando("3");
+        private async void btnLab4_Click(object sender, RoutedEventArgs e) => await EnviarComando("4");
 
-            string Jsonlab3 = JsonSerializer.Serialize(jsonlab3);
-
-            // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
-            if (miBroker == null)
-            {
-                MessageBox.Show("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                // Publicamos el mensaje "3" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
-                await miBroker.PublicarMensajeAsync(MqttServices.abrir, Jsonlab3);
-
-                // Confirmación visual opcional
-                MessageBox.Show("La petición de apertura se envió correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
-                MessageBox.Show("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void btnLab4_Click(object sender, RoutedEventArgs e)
-        {
-            JsonAbrir jsonlab4 = new JsonAbrir
-            { d = "4", c = "abrir" };
-
-            string Jsonlab4 = JsonSerializer.Serialize(jsonlab4);
-
-            // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
-            if (miBroker == null)
-            {
-                MessageBox.Show("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                // Publicamos el mensaje "4" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
-                await miBroker.PublicarMensajeAsync(MqttServices.abrir, Jsonlab4);
-
-                // Confirmación visual opcional
-                MessageBox.Show("La petición de apertura se envió correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
-                MessageBox.Show("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
         private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
         {
             InicioWindow ventanaInicio = new InicioWindow();
