@@ -15,7 +15,7 @@ namespace Shared.Models
         public Laboratorios Laboratorio { get; set; } = null!;
 
 
-        public DateTime FechaPrestamo { get; set; }
+        public DateTime FechaPrestamo { get; set; } 
         public DateTime HoraInicio { get; set; }
         public DateTime HoraFinal { get; set; }
         public int EncargadoID { get; set; }

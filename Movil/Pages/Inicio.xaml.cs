@@ -2,12 +2,14 @@ using Movil.Data;
 using Shared.Models;
 using Shared.Services;
 using System.Text.Json;
+using Microsoft.Maui.Storage; 
 
 namespace Movil.Pages;
 
 public partial class Inicio : ContentPage
 {
     private ConexionMqtt miBroker;
+    public int NombreUsuario { get; set; }
     public Inicio()
     {
         InitializeComponent();
@@ -16,6 +18,10 @@ public partial class Inicio : ContentPage
         //Asignar el manejador de mensajes antes de conectar
         
         ConectarYSuscribir();
+        NombreUsuario = Preferences.Default.Get("usuarioID", 0);
+
+        // 2. Le decimos a la página que ella misma es su fuente de datos
+        this.BindingContext = this;
 
     }
     private async void ConectarYSuscribir()
