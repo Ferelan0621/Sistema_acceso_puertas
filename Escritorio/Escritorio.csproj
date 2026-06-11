@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\Atras.png" />
+    <None Remove="Images\Fuera_servicio.png" />
+    <None Remove="Images\Libre.png" />
+    <None Remove="Images\Limpieza.png" />
+    <None Remove="Images\Mantenimiento.png" />
+    <None Remove="Images\Ocupado.png" />
     <None Remove="Images\Puerta_abierta.png" />
     <None Remove="Images\Puerta_cerrada.png" />
     <None Remove="Images\Regresar.png" />
@@ -24,6 +30,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\Atras.png" />
+    <Resource Include="Images\Fuera_servicio.png" />
+    <Resource Include="Images\Libre.png" />
+    <Resource Include="Images\Limpieza.png" />
+    <Resource Include="Images\Mantenimiento.png" />
+    <Resource Include="Images\Ocupado.png" />
     <Resource Include="Images\Puerta_abierta.png" />
     <Resource Include="Images\Puerta_cerrada.png" />
     <Resource Include="Images\Regresar.png" />

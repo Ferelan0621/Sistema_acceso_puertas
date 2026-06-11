@@ -41,7 +41,6 @@ namespace Escritorio.Windows
         {
             watchdogTimer = new DispatcherTimer();
             watchdogTimer.Interval = TimeSpan.FromSeconds(35);
-            watchdogTimer.Tick += WatchdogTimer_Tick;
         }
 
         private async void ConectarYSuscribir()
@@ -93,32 +92,12 @@ namespace Escritorio.Windows
                                 imgPuertaCerradaLab2.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
                                 imgPuertaAbiertaLab2.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
                                 break;
-                            case "LAB:03_S1":
-                                imgPuertaCerradaLab3.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
-                                imgPuertaAbiertaLab3.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
-                                break;
-                            case "LAB:04_S1":
-                                imgPuertaCerradaLab4.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
-                                imgPuertaAbiertaLab4.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
-                                break;
                         }
-
-                        lblUltimoReporte.Text = $"Último reporte ({idLab}): {DateTime.Now:HH:mm:ss}";
-                        lblStatusLora.Text = "Red LoRa: Operativa";
-                        lblStatusLora.Foreground = new SolidColorBrush(Colors.Blue);
-
                         watchdogTimer.Stop();
                         watchdogTimer.Start();
                     });
                 }
             }
-        }
-
-        private void WatchdogTimer_Tick(object sender, EventArgs e)
-        {
-            watchdogTimer.Stop();
-            lblStatusLora.Text = "Nodo Inalcanzable (Pérdida de señal LoRa)";
-            lblStatusLora.Foreground = new SolidColorBrush(Colors.Red);
         }
 
         private async Task EnviarComando(string idLab)
