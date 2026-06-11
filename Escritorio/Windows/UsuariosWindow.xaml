@@ -13,7 +13,7 @@
                     <ContentPresenter />
                 </ControlTemplate>
             </Button.Template>
-            <Image Source="pack://application:,,,/Images/Regresar.png" Stretch="Uniform" />
+            <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
         </Button>
     </Grid>
 </Window>
