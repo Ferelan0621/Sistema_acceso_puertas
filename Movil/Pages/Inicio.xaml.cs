@@ -1,14 +1,17 @@
+using Microsoft.Maui.Storage; 
 using Movil.Data;
+using Movil.Services;
 using Shared.Models;
 using Shared.Services;
 using System.Text.Json;
-using Microsoft.Maui.Storage; 
 
 namespace Movil.Pages;
 
 public partial class Inicio : ContentPage
 {
     private ConexionMqtt miBroker;
+    private readonly ApiService _apiService = new ApiService();
+
     public int NombreUsuario { get; set; }
     public Inicio()
     {
@@ -24,6 +27,42 @@ public partial class Inicio : ContentPage
         this.BindingContext = this;
 
     }
+
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        CargarLaboratorios();
+    }
+    private async void CargarLaboratorios()
+    {
+        try
+        {
+            var listaLabs = await _apiService.ObtenerLaboratoriosAsync();
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (listaLabs != null && listaLabs.Count > 0)
+                {
+                    // Pasamos la lista al CollectionView que ahora es un Grid
+                    gridLaboratorios.ItemsSource = listaLabs;
+                    lblTitulo.Text = "Selecciona un Lab";
+                }
+                else
+                {
+                    lblTitulo.Text = "No hay laboratorios";
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            MainThread.BeginInvokeOnMainThread(() => {
+                DisplayAlert("Error", ex.Message, "OK");
+            });
+        }
+    }
+
+
     private async void ConectarYSuscribir()
     {
         try
@@ -46,38 +85,28 @@ public partial class Inicio : ContentPage
         }
     }
 
-
-
-    private async void Prueba_Clicked(object sender, EventArgs e)
+    private async void OnLaboratorioSeleccionado(object sender, SelectionChangedEventArgs e)
     {
-
-       
-
-        // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
-        if (miBroker == null)
-        {
-            DisplayAlertAsync("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", "OK", "Warning");
+        // 1. Validar que el usuario realmente haya tocado una tarjeta
+        if (e.CurrentSelection.FirstOrDefault() == null)
             return;
-        }
 
-        try
-        {
-            // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
-            await miBroker.PublicarMensajeAsync(MqttServices.conexion, "abrir");
+        // 2. Extraemos tu objeto con la clase exacta
+        Laboratorios labSeleccionado = (Laboratorios)e.CurrentSelection.FirstOrDefault();
 
-            // Confirmación visual opcional
-            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
-            {
+        // 3. Limpiamos la selección del Grid inmediatamente para evitar bloqueos al regresar
+        gridLaboratorios.SelectedItem = null;
 
-                Prueba.IsEnabled = false;
-                await Task.Delay(5000);
-                Prueba.IsEnabled = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
-            DisplayAlertAsync("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", "OK", "Error");
-        }
-    }   
+        // 4. Creamos el diccionario de parámetros de navegación de Shell
+        // "LaboratorioClave" es el apodo con el que viajará el objeto en la mochila
+        var parametrosNavegacion = new Dictionary<string, object>
+    {
+        { "LaboratorioClave", labSeleccionado }
+    };
+
+        // 5. ¡VÁMONOS! Navegamos usando la ruta que registramos en el Paso 1
+        await Shell.Current.GoToAsync("Prestamo", parametrosNavegacion);
+    }
+
+   
 }

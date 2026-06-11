@@ -1,17 +1,70 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Shared.Models;assembly=Shared"
              xmlns:converters="clr-namespace:Movil.Converters"
+             x:DataType="local:Laboratorios"
              x:Class="Movil.Pages.Inicio">
-    <VerticalStackLayout>
-        <Button
-        x:Name="Prueba"
-        Text="pucale"
-        Clicked="Prueba_Clicked"
-        Margin="10"
-        
-        />
 
-        <Label Text="{Binding NombreUsuario}"/>
-    </VerticalStackLayout>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:EstadoToColorConverterBase x:Key="ColorEstado" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <Label x:Name="lblTitulo" Text="Laboratorios Disponibles" FontSize="22" FontAttributes="Bold" />
+
+            <CollectionView x:Name="gridLaboratorios"
+                    SelectionMode="Single"
+                            SelectionChanged="OnLaboratorioSeleccionado"
+                    HeightRequest="350">
+
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
+
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="{Binding estatus, Converter={StaticResource ColorEstado}}" />
+                                            <Setter Property="Stroke" Value="#D1D1D1" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="#5EE3F2FD" />
+                                            <Setter Property="Stroke" Value="#005A9C" />
+                                            
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <Grid Padding="10" RowDefinitions="Auto, *, Auto">
+                                <Label Grid.Row="0" Text="{Binding edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
+
+                                <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
+                                    <Label Text="{Binding nombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
+                                </VerticalStackLayout>
+
+                                <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="5">
+                                    <Label Text="Estado:" FontSize="11" TextColor="LightBlue"/>
+                                    <Label Text="{Binding estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage> 

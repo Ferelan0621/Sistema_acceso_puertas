@@ -18,10 +18,8 @@
             Format="T"/>
         
         
-        <Picker x:Name="pickerLab" 
-        Title="Cargando laboratorios..." 
-        ItemDisplayBinding="{Binding nombreLaboratorio}"
-               />
+        
+               
 
         <Button 
             x:Name="prestamo"

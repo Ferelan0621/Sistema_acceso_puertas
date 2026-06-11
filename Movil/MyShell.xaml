@@ -13,7 +13,7 @@
         <Tab Title="Inicio">
             <ShellContent  
                 Route="inicio"
-                ContentTemplate="{DataTemplate local:Prestamo}"/>
+                ContentTemplate="{DataTemplate local:Inicio}"/>
         </Tab>
 
         <Tab Title="Historial">

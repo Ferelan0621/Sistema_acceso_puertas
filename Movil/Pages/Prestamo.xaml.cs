@@ -10,18 +10,21 @@ using System.Text.Json;
 
 namespace Movil.Pages;
 
-public partial class Prestamo : ContentPage
+public partial class Prestamo : ContentPage, IQueryAttributable
+
 {
     private ConexionMqtt miBroker;
     private readonly ApiService _apiService = new ApiService();
     public int userId { get; set; }
+    private Laboratorios _laboratorioActual;
 
-
-    public int UsuarioId { get; set; }
 
     public Prestamo()
     {
         InitializeComponent();
+
+       
+    
         miBroker = new ConexionMqtt();
 
         //Asignar el manejador de mensajes antes de conectar
@@ -31,64 +34,20 @@ public partial class Prestamo : ContentPage
 
 
     }
-    protected override void OnAppearing()
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        base.OnAppearing();
-        CargarLaboratorios();
-    }
-
-    private async void CargarLaboratorios()
-    {
-        try
+        if (query.TryGetValue("LaboratorioClave", out var laboratorioObjeto))
         {
-            // 1. Usamos tu método exacto de la foto 3
-            var laboratorios = await _apiService.ObtenerLaboratoriosAsync();
-
-            // 2. Le pasamos los datos a la pantalla forzando el hilo principal
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                if (laboratorios != null && laboratorios.Count > 0)
-            {
-                // Llenamos el Picker
-                pickerLab.ItemsSource = laboratorios;
-                pickerLab.Title = "Selecciona un laboratorio...";
-            }
-            else
-            {
-                // Si la lista llegó vacía, avisamos
-                pickerLab.Title = "No se encontraron laboratorios";
-            }
-            });
-        }
-        catch (Exception ex)
-        {
-            // Si algo truena, mostramos la alerta en el hilo principal
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                pickerLab.Title = "Error de conexión";
-                DisplayAlert("Aviso", $"Ocurrió un error: {ex.Message}", "OK");
-            });
+            // Guardamos el objeto en la variable global para que el botón lo pueda usar
+            _laboratorioActual = (Laboratorios)laboratorioObjeto;
         }
     }
+
+    // 4. TU BOTÓN DE PRÉSTAMO
     private async void prestamo_Clicked(object sender, EventArgs e)
     {
-        if (pickerLab.SelectedIndex == -1)
-        {
-            DisplayAlert("Aviso", "Por favor, selecciona un laboratorio primero.", "OK");
-            return; // Rompemos la ejecución para que no truene lo de abajo
-        }
-
-        // ==========================================================
-        // 2. EXTRACCIÓN DEL OBJETO DEL PICKER (EL TRUCO)
-        // ==========================================================
-        // Sabemos que le metiste una lista de 'LaboratorioModel' al pickerLab.
-        // Por lo tanto, el SelectedItem ES un 'LaboratorioModel'. Lo transformamos (casteo).
-
-        Laboratorios labSeleccionado = (Laboratorios)pickerLab.SelectedItem;
-
-        // ¡Boom! Ya tienes las variables separadas a tu disposición
-        int idDelLaboratorio = labSeleccionado.ID;
-        string nombreDelLaboratorio = labSeleccionado.nombreLaboratorio;
+        // ¡Aquí ya no te debe marcar error porque la variable global ya existe y tiene datos!
+        int idParaElJson = _laboratorioActual.ID;
 
 
         // ==========================================================
@@ -101,7 +60,6 @@ public partial class Prestamo : ContentPage
         string horastart = timeStart.Time.ToString();
         string horafinish = timeFinish.Time.ToString();
 
-
         // ==========================================================
         // 4. CREACIÓN DEL OBJETO PARA EL JSON
         // ==========================================================
@@ -110,7 +68,8 @@ public partial class Prestamo : ContentPage
         var payloadSolicitud = new
         {
             UsuarioID = userId,
-            LaboratorioID = idDelLaboratorio,
+            LaboratorioID = idParaElJson,
+
             FechaPrestamo = fechaSolicitud,
             HoraInicio = horastart,
             HoraFinal = horafinish,
