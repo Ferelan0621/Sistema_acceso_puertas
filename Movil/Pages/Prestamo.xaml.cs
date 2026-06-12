@@ -49,47 +49,29 @@ public partial class Prestamo : ContentPage, IQueryAttributable
         // ¡Aquí ya no te debe marcar error porque la variable global ya existe y tiene datos!
         int idParaElJson = _laboratorioActual.ID;
 
-
-        // ==========================================================
-        // 3. CAPTURA DE FECHA ACTUAL Y TIMEPICKER
-        // ==========================================================
-        // Capturamos el momento exacto en que presionó el botón (ideal para bitácoras)
         string fechaSolicitud = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
 
-        // Extraemos la hora que escogió en el control
         string horastart = timeStart.Time.ToString();
         string horafinish = timeFinish.Time.ToString();
 
-        // ==========================================================
-        // 4. CREACIÓN DEL OBJETO PARA EL JSON
-        // ==========================================================
-        // Armamos un objeto anónimo con la estructura exacta que tu API 
-        // o tu sistema de mensajería espera recibir.
         var payloadSolicitud = new
         {
             UsuarioID = userId,
             LaboratorioID = idParaElJson,
 
-            FechaPrestamo = fechaSolicitud,
-            HoraInicio = horastart,
-            HoraFinal = horafinish,
-            estatus = "Pendiente" // Puedes meter datos estáticos de control
+            FechaPrestamo = fechaSolicitud
+            
         };
 
-        // ==========================================================
-        // 5. SERIALIZACIÓN A JSON
-        // ==========================================================
         var opcionesJson = new JsonSerializerOptions
         {
-            WriteIndented = true, // Para que se vea bonito y estructurado
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase // Estandariza minúsculas al inicio
+            WriteIndented = true, 
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
         };
 
-        // Convertimos el objeto 'payloadSolicitud' en una cadena de texto JSON
         string jsonFinal = JsonSerializer.Serialize(payloadSolicitud, opcionesJson);
         LabelResultado.Text = jsonFinal;
 
-        // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
         if (miBroker == null)
         {
             DisplayAlertAsync("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", "OK", "Warning");
@@ -98,10 +80,8 @@ public partial class Prestamo : ContentPage, IQueryAttributable
 
         try
         {
-            // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
             await miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
 
-            // Confirmación visual opcional
             if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
             {
 
@@ -110,7 +90,6 @@ public partial class Prestamo : ContentPage, IQueryAttributable
         }
         catch (Exception ex)
         {
-            // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
             DisplayAlertAsync("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", "OK", "Error");
         }
 
@@ -125,7 +104,6 @@ public partial class Prestamo : ContentPage, IQueryAttributable
         }
         catch (Exception ex)
         {
-            // Mostramos el mensaje y capturamos el resultado del botón presionado
             var resultado = DisplayAlertAsync(
                 "Error al inicializar la conexión MQTT: " + ex.Message,
                 "Error de Conexión",
@@ -140,37 +118,6 @@ public partial class Prestamo : ContentPage, IQueryAttributable
 
 
 
-    private async void Mensaje()
-    {
-
-
-
-        // Validamos que el elemento principal (el broker) no falte antes de intentar enviar
-        if (miBroker == null)
-        {
-            DisplayAlertAsync("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", "OK", "Warning");
-            return;
-        }
-
-        try
-        {
-            // Publicamos el mensaje "2" en el tópico definido en MqttServices.abrir ("UPT/LABORATORIOS")
-            await miBroker.PublicarMensajeAsync(MqttServices.conexion, "abrir");
-
-            // Confirmación visual opcional
-            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
-            {
-
-                //    Prueba.IsEnabled = false;
-                //    await Task.Delay(5000);
-                //    Prueba.IsEnabled = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            // Capturamos cualquier error en caso de que falte conexión de red o falle el envío
-            DisplayAlertAsync("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", "OK", "Error");
-        }
-    }
+   
 
 }

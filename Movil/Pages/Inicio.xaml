@@ -64,7 +64,7 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
+            <Label x:Name="LabelResultado"/>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage> 

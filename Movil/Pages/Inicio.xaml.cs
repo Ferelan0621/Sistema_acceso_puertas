@@ -11,8 +11,9 @@ public partial class Inicio : ContentPage
 {
     private ConexionMqtt miBroker;
     private readonly ApiService _apiService = new ApiService();
+    private Laboratorios _laboratorioActual;
 
-    public int NombreUsuario { get; set; }
+    public int userId { get; set; }
     public Inicio()
     {
         InitializeComponent();
@@ -21,13 +22,20 @@ public partial class Inicio : ContentPage
         //Asignar el manejador de mensajes antes de conectar
         
         ConectarYSuscribir();
-        NombreUsuario = Preferences.Default.Get("usuarioID", 0);
+        userId = Preferences.Default.Get("usuarioID", 0);
 
         // 2. Le decimos a la página que ella misma es su fuente de datos
         this.BindingContext = this;
 
     }
-
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("LaboratorioClave", out var laboratorioObjeto))
+        {
+            // Guardamos el objeto en la variable global para que el botón lo pueda usar
+            _laboratorioActual = (Laboratorios)laboratorioObjeto;
+        }
+    }
 
     protected override void OnAppearing()
     {
@@ -105,8 +113,50 @@ public partial class Inicio : ContentPage
     };
 
         // 5. ¡VÁMONOS! Navegamos usando la ruta que registramos en el Paso 1
-        await Shell.Current.GoToAsync("Prestamo", parametrosNavegacion);
+        int idParaElJson = labSeleccionado.ID;
+
+        string fechaSolicitud = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
+
+        var payloadSolicitud = new
+        {
+            UsuarioID = userId,
+            LaboratorioID = idParaElJson,
+
+            FechaPrestamo = fechaSolicitud
+
+        };
+
+        var opcionesJson = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        string jsonFinal = JsonSerializer.Serialize(payloadSolicitud, opcionesJson);
+        LabelResultado.Text = jsonFinal;
+
+        if (miBroker == null)
+        {
+            DisplayAlertAsync("Falta inicializar el cliente MQTT. No se puede enviar la petición.", "Elemento Faltante", "OK", "Warning");
+            return;
+        }
+
+        try
+        {
+            await miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
+
+            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
+            {
+
+
+            }
+        }
+        catch (Exception ex)
+        {
+            DisplayAlertAsync("Falta conexión o hubo un error al enviar el mensaje: " + ex.Message, "Error de Envío", "OK", "Error");
+        }
+
     }
 
-   
+
 }
