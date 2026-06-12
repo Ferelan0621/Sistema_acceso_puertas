@@ -9,8 +9,8 @@ namespace Escritorio.Data
 {
     public class EscritorioMQTT
     {
-        private IMqttClient mqttClient;
-        
+        private IMqttClient? mqttClient;
+
         // Evento para notificar a la UI cuando llega un mensaje
         public event Action<string, string> MensajeRecibido;
 
@@ -18,12 +18,27 @@ namespace Escritorio.Data
         {
             try
             {
-                var factory = new MqttFactory();
-                mqttClient = factory.CreateMqttClient();
+                // Evita intentar conectarse si ya estamos conectados
+                if (mqttClient != null && mqttClient.IsConnected)
+                    return;
 
-                // Configuración para tu Mosquitto local. 
-                // Si está en otra PC o Docker, cambia "localhost" por la IP correspondiente.
-                //.WithClientId("ApiCsharpCliente_" + Guid.NewGuid().ToString().Substring(0, 5)) // ID único
+                // Solo inicializamos el cliente si no existe
+                if (mqttClient == null)
+                {
+                    var factory = new MqttFactory();
+                    mqttClient = factory.CreateMqttClient();
+
+                    // Suscribimos el evento SOLO UNA VEZ al crear el cliente
+                    mqttClient.ApplicationMessageReceivedAsync += e =>
+                    {
+                        string topic = e.ApplicationMessage.Topic;
+                        string payload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+                        // Disparar el evento hacia la ventana
+                        MensajeRecibido?.Invoke(topic, payload);
+                        return Task.CompletedTask;
+                    };
+                }
 
                 var options = new MqttClientOptionsBuilder()
                     .WithClientId("ClientApp" + Guid.NewGuid().ToString().Substring(0, 5)) // ID único
@@ -32,21 +47,12 @@ namespace Escritorio.Data
                     .WithCleanSession()
                     .Build();
 
-                mqttClient.ApplicationMessageReceivedAsync += e =>
-                {
-                    string topic = e.ApplicationMessage.Topic;
-                    string payload = System.Text.Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-
-                    // Disparar el evento hacia la ventana
-                    MensajeRecibido?.Invoke(topic, payload);
-                    return Task.CompletedTask;
-                };
-
                 await mqttClient.ConnectAsync(options);
             }
             catch (Exception ex)
             {
-                throw; //Colocar el error para atraparlo en la ventana
+                // Dejamos que el error suba a la ventana para que el try-catch de ahí lo atrape
+                throw;
             }
         }
 
@@ -64,11 +70,15 @@ namespace Escritorio.Data
 
         public async Task PublicarMensajeAsync(string topico, string mensaje)
         {
-            await ConectarAsync();
+            // Validamos: si no existe el cliente o se desconectó, entonces sí nos conectamos
+            if (mqttClient == null || !mqttClient.IsConnected)
+            {
+                await ConectarAsync();
+            }
 
             var applicationMessage = new MqttApplicationMessageBuilder()
                 .WithTopic(topico)
-                .WithPayload(mensaje)
+                .WithPayload(mensaje) // Usa .WithPayloadSegment(Encoding.UTF8.GetBytes(mensaje)) si usas MQTTnet v4+ y te marca advertencia
                 .Build();
 
             await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);

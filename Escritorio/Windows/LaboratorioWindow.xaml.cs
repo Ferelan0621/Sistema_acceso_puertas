@@ -3,59 +3,58 @@ using Shared.Models;
 using Shared.Services;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Escritorio.Windows
 {
-    //version de la vaina 1.0 y proximo actulizacion
-
-    /// <summary>
-    /// Lógica de interacción para LaboratorioWindow.xaml
-    /// </summary>
     public partial class LaboratorioWindow : Window
     {
         private EscritorioMQTT miBroker;
-        private DispatcherTimer watchdogTimer;
+        private readonly ApiService _apiService = new ApiService();
+        private List<Laboratorios> _listaLaboratorios = new List<Laboratorios>();
+
+        public int NombreUsuario { get; set; }
 
         public LaboratorioWindow()
         {
             InitializeComponent();
             miBroker = new EscritorioMQTT();
             miBroker.MensajeRecibido += MensajeRecibido;
-
-            ConfigurarWatchdog();
-            ConectarYSuscribir();
+            CargarDatosYConectar();
         }
 
-        private void ConfigurarWatchdog()
-        {
-            watchdogTimer = new DispatcherTimer();
-            watchdogTimer.Interval = TimeSpan.FromSeconds(35);
-        }
-
-        private async void ConectarYSuscribir()
+        private async void CargarDatosYConectar()
         {
             try
             {
+                lblStatus.Text = "Consultando base de datos...";
+
+                // La API solo nos trae la lista maestra (Nombres, Direcciones Lora, etc.)
+                _listaLaboratorios = await _apiService.ObtenerLaboratoriosAsync();
+                icLaboratorios.ItemsSource = _listaLaboratorios;
+
+                lblStatus.Text = "Iniciando conexión MQTT...";
+
                 await miBroker.ConectarAsync();
+
+                // Nos suscribimos a tus tópicos oficiales
                 await miBroker.SuscribirseAsync(MqttServices.statusTopic);
-                // Suscripción con comodín para capturar todos los laboratorios
+
+                // Con el "+", le decimos que escuche cualquier laboratorio (Ej. UPT/LABORATORIOS/doorStatus/LAB:01)
                 await miBroker.SuscribirseAsync(MqttServices.doorTopic + "/+");
             }
             catch (Exception ex)
             {
-                if (MessageBox.Show("Error al conectar MQTT: " + ex.Message, "Error", MessageBoxButton.RetryCancel) == MessageBoxResult.Retry)
-                    ConectarYSuscribir();
+                MessageBox.Show($"Error en la inicialización: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (MessageBox.Show("¿Reintentar conexión MQTT?", "Aviso", MessageBoxButton.RetryCancel) == MessageBoxResult.Retry)
+                {
+                    CargarDatosYConectar();
+                }
             }
         }
 
@@ -63,38 +62,42 @@ namespace Escritorio.Windows
         {
             if (string.IsNullOrEmpty(payload)) return;
 
-            // Estado del Gateway
+            // 1. Estado general del Gateway
             if (topic == MqttServices.statusTopic)
             {
                 Dispatcher.Invoke(() =>
                 {
                     bool online = payload.ToLower().Contains("online");
                     StatusIndicator.Fill = new SolidColorBrush(online ? Colors.Green : Colors.Red);
-                    lblStatus.Text = online ? "Conectado" : "Desconectado";
+                    lblStatus.Text = online ? "MQTT Conectado" : "MQTT Desconectado";
                 });
                 return;
             }
 
-            // Procesamiento de Puertas (Carril único)
+            // 2. Control de Puertas 100% por sensor (Sin tocar base de datos)
             if (topic.StartsWith(MqttServices.doorTopic))
             {
+                // Cortamos el tópico: UPT / LABORATORIOS / doorStatus / ID_DEL_LAB
                 string[] parts = topic.Split('/');
+
+                // Verificamos que el arreglo tenga al menos 4 partes (índice 3)
                 if (parts.Length > 3)
                 {
-                    string idLab = parts[3];
+                    string idLabMqtt = parts[3]; // Aquí se guarda el identificador, ej: "LAB:02_S1"
+
+                    // Verificamos si el payload dice que se abrió
                     bool abierta = payload.ToLower().Contains("abierta") || payload.Contains("true") || payload.Contains("1") || payload.Contains("open");
 
                     Dispatcher.Invoke(() =>
                     {
-                        switch (idLab)
+                        var laboratorioModificado = _listaLaboratorios.FirstOrDefault(lab => lab.direccionLora == idLabMqtt);
+
+                        if (laboratorioModificado != null)
                         {
-                            case "LAB:02_S1":
-                                imgPuertaCerradaLab2.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
-                                imgPuertaAbiertaLab2.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
-                                break;
+                            // Actualizamos ÚNICAMENTE la memoria local para que reaccione la interfaz visual
+                            laboratorioModificado.estadoPuerta = abierta ? "Abierto" : "Cerrado";
+                            icLaboratorios.Items.Refresh();
                         }
-                        watchdogTimer.Stop();
-                        watchdogTimer.Start();
                     });
                 }
             }
@@ -104,6 +107,7 @@ namespace Escritorio.Windows
         {
             try
             {
+                // Enviamos el comando de abrir al tópico maestro ("UPT/LABORATORIOS")
                 string json = JsonSerializer.Serialize(new JsonAbrir { d = idLab, c = "abrir" });
                 await miBroker.PublicarMensajeAsync(MqttServices.abrir, json);
             }
@@ -113,15 +117,31 @@ namespace Escritorio.Windows
             }
         }
 
-        private async void btnLab2_Click(object sender, RoutedEventArgs e) => await EnviarComando("2");
-        private async void btnLab3_Click(object sender, RoutedEventArgs e) => await EnviarComando("3");
-        private async void btnLab4_Click(object sender, RoutedEventArgs e) => await EnviarComando("4");
+        private async void btnAbrirLab_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn != null)
+            {
+                var laboratorioSeleccionado = btn.DataContext as Laboratorios;
+                if (laboratorioSeleccionado != null)
+                {
+                    await EnviarComando(laboratorioSeleccionado.ID.ToString());
+                }
+            }
+        }
 
         private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
         {
-            InicioWindow ventanaInicio = new InicioWindow();
-            ventanaInicio.Show();
-            this.Hide();
+            try
+            {
+                InicioWindow ventanaInicio = new InicioWindow();
+                ventanaInicio.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar la ventana: \n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
