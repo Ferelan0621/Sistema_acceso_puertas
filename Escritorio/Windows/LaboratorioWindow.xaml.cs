@@ -14,18 +14,23 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MQTTnet;
+using MQTTnet.Client;
 
 namespace Escritorio.Windows
 {
-    //version de la vaina 1.0 y proximo actulizacion
-
-    /// <summary>
-    /// Lógica de interacción para LaboratorioWindow.xaml
-    /// </summary>
     public partial class LaboratorioWindow : Window
     {
         private EscritorioMQTT miBroker;
-        private DispatcherTimer watchdogTimer;
+        private readonly ApiService _apiService = new ApiService();
+
+        // Esta es la lista maestra que controlará lo que se ve en pantalla
+        private List<Laboratorios> _listaLaboratorios = new List<Laboratorios>();
+
+        public int NombreUsuario { get; set; }
 
         public LaboratorioWindow()
         {
@@ -33,29 +38,36 @@ namespace Escritorio.Windows
             miBroker = new EscritorioMQTT();
             miBroker.MensajeRecibido += MensajeRecibido;
 
-            ConfigurarWatchdog();
-            ConectarYSuscribir();
+            // Primero cargamos la UI con la base de datos, luego conectamos MQTT
+            CargarDatosYConectar();
         }
 
-        private void ConfigurarWatchdog()
-        {
-            watchdogTimer = new DispatcherTimer();
-            watchdogTimer.Interval = TimeSpan.FromSeconds(35);
-        }
-
-        private async void ConectarYSuscribir()
+        private async void CargarDatosYConectar()
         {
             try
             {
+                lblStatus.Text = "Consultando base de datos...";
+
+                // 1. Traemos los laboratorios de la base de datos (API)
+                _listaLaboratorios = await _apiService.ObtenerLaboratoriosAsync();
+
+                // 2. Pintamos la interfaz asignando la lista al ItemsControl
+                icLaboratorios.ItemsSource = _listaLaboratorios;
+
+                lblStatus.Text = "Iniciando conexión MQTT...";
+
+                // 3. Ya con los datos listos, conectamos el broker
                 await miBroker.ConectarAsync();
                 await miBroker.SuscribirseAsync(MqttServices.statusTopic);
-                // Suscripción con comodín para capturar todos los laboratorios
                 await miBroker.SuscribirseAsync(MqttServices.doorTopic + "/+");
             }
             catch (Exception ex)
             {
-                if (MessageBox.Show("Error al conectar MQTT: " + ex.Message, "Error", MessageBoxButton.RetryCancel) == MessageBoxResult.Retry)
-                    ConectarYSuscribir();
+                MessageBox.Show($"Error en la inicialización: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (MessageBox.Show("¿Reintentar conexión MQTT?", "Aviso", MessageBoxButton.RetryCancel) == MessageBoxResult.Retry)
+                {
+                    CargarDatosYConectar();
+                }
             }
         }
 
@@ -63,38 +75,44 @@ namespace Escritorio.Windows
         {
             if (string.IsNullOrEmpty(payload)) return;
 
-            // Estado del Gateway
+            // Estado general del Gateway
             if (topic == MqttServices.statusTopic)
             {
                 Dispatcher.Invoke(() =>
                 {
                     bool online = payload.ToLower().Contains("online");
+                    // Asumiendo que StatusIndicator sigue en el XAML principal (fuera del ItemsControl)
                     StatusIndicator.Fill = new SolidColorBrush(online ? Colors.Green : Colors.Red);
-                    lblStatus.Text = online ? "Conectado" : "Desconectado";
+                    lblStatus.Text = online ? "MQTT Conectado" : "MQTT Desconectado";
                 });
                 return;
             }
 
-            // Procesamiento de Puertas (Carril único)
+            // Procesamiento de Puertas Dinámico
             if (topic.StartsWith(MqttServices.doorTopic))
             {
                 string[] parts = topic.Split('/');
                 if (parts.Length > 3)
                 {
-                    string idLab = parts[3];
+                    string idLabMqtt = parts[3]; // Ej. "LAB:02_S1"
                     bool abierta = payload.ToLower().Contains("abierta") || payload.Contains("true") || payload.Contains("1") || payload.Contains("open");
 
                     Dispatcher.Invoke(() =>
                     {
-                        switch (idLab)
+                        // Buscamos cuál laboratorio de nuestra lista coincide con el ID que mandó MQTT.
+                        // OJO: Aquí estoy asumiendo que guardaste "LAB:02_S1" en la propiedad 'direccionLora'.
+                        var laboratorioModificado = _listaLaboratorios.FirstOrDefault(lab => lab.direccionLora == idLabMqtt);
+
+                        if (laboratorioModificado != null)
                         {
-                            case "LAB:02_S1":
-                                imgPuertaCerradaLab2.Visibility = abierta ? Visibility.Hidden : Visibility.Visible;
-                                imgPuertaAbiertaLab2.Visibility = abierta ? Visibility.Visible : Visibility.Hidden;
-                                break;
+                            // Actualizamos el estatus en el modelo
+                            // Asegúrate de que el Enum corresponda. (Ej. 1 para Abierto, 0 para Cerrado, o como lo tengas)
+                            // Si 'estatus' es un Enum de tu modelo, ajústalo según corresponda. Si es un Enum 'EstadoLaboratorio', podría ser algo así:
+                            // laboratorioModificado.estatus = abierta ? EstadoLaboratorio.Abierto : EstadoLaboratorio.Cerrado;
+
+                            // TRUCO: Como la lista no avisa automáticamente a la interfaz que un valor interno cambió, forzamos la actualización visual:
+                            icLaboratorios.Items.Refresh();
                         }
-                        watchdogTimer.Stop();
-                        watchdogTimer.Start();
                     });
                 }
             }
@@ -113,15 +131,37 @@ namespace Escritorio.Windows
             }
         }
 
-        private async void btnLab2_Click(object sender, RoutedEventArgs e) => await EnviarComando("2");
-        private async void btnLab3_Click(object sender, RoutedEventArgs e) => await EnviarComando("3");
-        private async void btnLab4_Click(object sender, RoutedEventArgs e) => await EnviarComando("4");
+        // Este evento reemplaza a btnLab2_Click, btnLab3_Click, etc.
+        private async void btnAbrirLab_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn != null)
+            {
+                // Extraemos todo el objeto "Laboratorios" directamente del botón que se presionó
+                var laboratorioSeleccionado = btn.DataContext as Laboratorios;
+
+                if (laboratorioSeleccionado != null)
+                {
+                    // Mandamos el comando usando el ID del modelo. Si tu ESP32 usa la dirección Lora, cámbialo a .direccionLora
+                    await EnviarComando(laboratorioSeleccionado.ID.ToString());
+                }
+            }
+        }
 
         private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
         {
-            InicioWindow ventanaInicio = new InicioWindow();
-            ventanaInicio.Show();
-            this.Hide();
+            try
+            {
+                // Este bloque try-catch te ayudará a ver por qué te daba error al regresar de ventana.
+                InicioWindow ventanaInicio = new InicioWindow();
+                ventanaInicio.Show();
+                this.Close(); // Es mejor Close() que Hide() para liberar memoria si no vas a reutilizar la misma instancia
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar la ventana de inicio: \n{ex.Message}\n\nDetalles técnicos:\n{ex.StackTrace}",
+                                "Error de Navegación", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

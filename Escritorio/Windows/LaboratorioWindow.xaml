@@ -1,43 +1,17 @@
 ﻿<Window x:Class="Escritorio.Windows.LaboratorioWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Escritorio.Windows"
-        mc:Ignorable="d"
-        Title="LaboratorioWindow" Height="450" Width="800">
+        xmlns:models="clr-namespace:Shared.Models;assembly=Shared"
+        Title="Laboratorios" Height="600" Width="900" >
+
+
     <Grid>
-        <Border Background="#FFDADADA" 
-            CornerRadius="10" 
-            Margin="60,35,0,0" 
-            HorizontalAlignment="Left" 
-            VerticalAlignment="Top" 
-            Width="140" 
-            Height="210">
-            
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
-            </Border.Effect>
-        </Border>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <Ellipse Name="StatusIndicator" Width="20" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="150,0,0,25" Fill="Gray" />
-        <TextBlock Name="lblStatus" Text="Esperando conexión..." VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="20,0,0,25" />
-        <Button x:Name="btnLab2" Content="Abrir Lab 2" HorizontalAlignment="Left" Margin="90,140,0,0" VerticalAlignment="Top" Click="btnLab2_Click" Background="White"/>
-        <Label x:Name="lblNombrelab" Content="Nombrelab" HorizontalAlignment="Left" Margin="86,40,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblNombreusuario" Content="NomUsuario" HorizontalAlignment="Left" Margin="86,173,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblHorainicio" Content="Horainicio" HorizontalAlignment="Left" Margin="69,0,0,0" VerticalAlignment="Center"/>
-        <Label x:Name="lblHorafinal" Content="Horafinal" HorizontalAlignment="Left" Margin="138,0,0,0" VerticalAlignment="Center"/>
-
-        <Image x:Name="imgPuertaAbiertaLab2" Source="pack://application:,,,/Images/Puerta_abierta.png" Margin="160,71,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50" Visibility="Hidden"/>
-        <Image x:Name="imgOcupado" Source="pack://application:,,,/Images/Ocupado.png" Margin="85,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50" Visibility="Hidden"/>
-        <Image x:Name="imgMantenimiento" Source="pack://application:,,,/Images/Mantenimiento.png" Margin="85,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50" Visibility="Hidden"/>
-        <Image x:Name="imgLimpieza" Source="pack://application:,,,/Images/Limpieza.png" Margin="85,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50" Visibility="Hidden"/>
-        <Image x:Name="imgFueraServicio" Source="pack://application:,,,/Images/Fuera_servicio.png" Margin="85,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50" Visibility="Hidden"/>
-
-        <Image x:Name="imgPuertaCerradaLab2" Source="pack://application:,,,/Images/Puerta_cerrada.png" Margin="126,71,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="50" Width="50"/>
-        <Image x:Name="imgLibre" Source="pack://application:,,,/Images/Libre.png" Margin="85,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="30" Width="30"/>
-
-        <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" Margin="20,65,0,0" VerticalAlignment="Top" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
+        <Button x:Name="btnImagenregresar" Grid.Row="0" HorizontalAlignment="Left" Margin="20,20,0,10" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <ContentPresenter />
@@ -45,6 +19,50 @@
             </Button.Template>
             <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
         </Button>
-        <Image Margin="997,186,-422,23" Source="/Images/Puerta_cerrada.png" Stretch="Fill"/>
+        <Ellipse x:Name="StatusIndicator" Grid.Row="0" Width="15" Height="15" Fill="Gray" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
+        <TextBlock Name="lblStatus" Grid.Row="0" Text="Esperando conexión..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
+            <ItemsControl x:Name="icLaboratorios">
+
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:Laboratorios}">
+                        <Border Background="#FFDADADA" CornerRadius="10" Margin="15" Width="160" Height="230">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                            </Border.Effect>
+
+                            <Grid>
+                                <Label Content="{Binding nombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
+
+                                <Image x:Name="imgPuerta" Margin="0,40,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding estatus}" Value="Abierto">
+                                                    <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+
+                                <Label Content="{Binding direccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10"/>
+
+                                <Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,160,0,0" VerticalAlignment="Top" Background="White" Width="100" Tag="{Binding ID}" Click="btnAbrirLab_Click"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </Window>
