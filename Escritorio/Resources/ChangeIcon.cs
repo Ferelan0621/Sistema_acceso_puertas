@@ -15,15 +15,16 @@ namespace Escritorio.Resources
             {
                 return estado switch
                 {
-                    EstadoLaboratorio.Disponible => "disponible.png",
-                    EstadoLaboratorio.Ocupado => "ocupado.png",
-                    EstadoLaboratorio.Mantenimiento => "mantenimiento.png",
-                    EstadoLaboratorio.Limpieza => "limpieza.png",
-                    _ => "desconocido.png"
+                    EstadoLaboratorio.Disponible => "pack://application:,,,/Images/disponible.png",
+                    EstadoLaboratorio.Ocupado => "pack://application:,,,/Images/ocupado.png",
+                    EstadoLaboratorio.Mantenimiento => "pack://application:,,,/Images/mantenimiento.png",
+                    EstadoLaboratorio.Limpieza => "pack://application:,,,/Images/limpieza.png",
+                    _ => "pack://application:,,,/Images/desconocido.png"
                 };
             }
             return null;
         }
+
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();

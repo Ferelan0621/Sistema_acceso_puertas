@@ -17,5 +17,9 @@ namespace Shared.Models
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
         public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();
 
+        public string estadoPuerta { get; set; } = "Cerrado";
+        public string horaInicio { get; set; } = "--:--";
+        public string horaFinal { get; set; } = "--:--";
+
     }
 }
