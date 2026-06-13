@@ -16,7 +16,7 @@ namespace Shared.Models
 
     public enum Rol
     {
-        Administrador = 0,
+       
         Administrativo = 1,
         Docente = 2,
         Mantenimiento = 3,

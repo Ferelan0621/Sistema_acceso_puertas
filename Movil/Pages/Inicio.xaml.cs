@@ -11,7 +11,7 @@ public partial class Inicio : ContentPage
 {
     private ConexionMqtt miBroker;
     private readonly ApiService _apiService = new ApiService();
-    private Laboratorios _laboratorioActual;
+    private Laboratorios laboratorioActual;
 
     public int userId { get; set; }
     public Inicio()
@@ -33,7 +33,7 @@ public partial class Inicio : ContentPage
         if (query.TryGetValue("LaboratorioClave", out var laboratorioObjeto))
         {
             // Guardamos el objeto en la variable global para que el botón lo pueda usar
-            _laboratorioActual = (Laboratorios)laboratorioObjeto;
+            laboratorioActual = (Laboratorios)laboratorioObjeto;
         }
     }
 
@@ -96,7 +96,7 @@ public partial class Inicio : ContentPage
     private async void OnLaboratorioSeleccionado(object sender, SelectionChangedEventArgs e)
     {
         // 1. Validar que el usuario realmente haya tocado una tarjeta
-        if (e.CurrentSelection.FirstOrDefault() == null)
+        if (e.CurrentSelection.FirstOrDefault() == null )
             return;
 
         // 2. Extraemos tu objeto con la clase exacta
@@ -104,17 +104,20 @@ public partial class Inicio : ContentPage
 
         // 3. Limpiamos la selección del Grid inmediatamente para evitar bloqueos al regresar
         gridLaboratorios.SelectedItem = null;
-
-        // 4. Creamos el diccionario de parámetros de navegación de Shell
-        // "LaboratorioClave" es el apodo con el que viajará el objeto en la mochila
+   
         var parametrosNavegacion = new Dictionary<string, object>
     {
-        { "LaboratorioClave", labSeleccionado }
+        { "LaboratorioClave", labSeleccionado },
+            
     };
 
+        if (labSeleccionado.estatus != EstadoLaboratorio.Disponible)
+        {
+            await DisplayAlert("Aviso", "Este laboratorio está ocupado o en mantenimiento. No puedes seleccionarlo.", "OK");
+            return; // ¡ESTE RETURN ES LA CLAVE! Frena todo, inhabilitando el envío.
+        }
         // 5. ¡VÁMONOS! Navegamos usando la ruta que registramos en el Paso 1
         int idParaElJson = labSeleccionado.ID;
-
         string fechaSolicitud = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
 
         var payloadSolicitud = new
@@ -145,8 +148,9 @@ public partial class Inicio : ContentPage
         {
             await miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
 
-            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK", "Information").IsCanceled)
+            if (DisplayAlertAsync("La petición de apertura se envió correctamente.", "Éxito", "OK").IsCanceled)
             {
+                // para hacer el cambip del pedo
 
 
             }
