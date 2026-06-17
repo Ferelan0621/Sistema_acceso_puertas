@@ -24,19 +24,3 @@ namespace Shared.Models
     }
 
 }
-namespace Shared.Models
-{
-    public class RolDto
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; }
-    }
-
-    public class RegistroUsuarioDTO
-    {
-        public string Nombre { get; set; }
-        public string ClaveIMSSEMYM { get; set; }
-        public string Password { get; set; }
-        public int RolId { get; set; }
-    }
-}

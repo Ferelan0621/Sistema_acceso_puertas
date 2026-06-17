@@ -1,7 +1,9 @@
 ﻿
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace Shared.Models
 {
-    public class Prestamos
+    public  partial class Prestamos : ObservableObject
     {
         public int ID { get; set; }
 
@@ -9,17 +11,24 @@ namespace Shared.Models
         public int UsuarioID { get; set; }
 
         // Propiedad de navegación hacia el usuario que la creó
-        public Usuarios Usuario { get; set; } = null!;
+        [ObservableProperty]
+        private Usuarios usuario;
 
         public int LaboratorioID { get; set; }
-        public Laboratorios Laboratorio { get; set; } = null!;
+        [ObservableProperty]
+        private Laboratorios laboratorio;
 
-
-        public DateTime FechaPrestamo { get; set; } 
-        public DateTime HoraInicio { get; set; }
-        public DateTime HoraFinal { get; set; }
+        [ObservableProperty]
+        private DateTime ferchaSolicitud;
+        [ObservableProperty]
+        private DateTime fechaApertura;
+        [ObservableProperty]
+        private DateTime fechaCierre;
+        [ObservableProperty]
+        private DateTime fechaCierreRemoto;
         public int EncargadoID { get; set; }
-        public Encargados Encargado { get; set; } = null!;
+        [ObservableProperty]
+        private Encargados encargado;
 
     }
 }

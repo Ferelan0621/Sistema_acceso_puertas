@@ -1,14 +1,13 @@
-﻿    using System;
-using System.Collections.Generic;
-using System.Text;
+﻿
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Shared.Models
 {
-    public class Usuarios
+    public partial class Usuarios:  ObservableObject
     {
         public int ID { get; set; }
-        public string Nombre { get; set; } = null!;
+        private string Nombre { get; set; } = null!;
         public string Password { get; set; } = null!;
         public string ClaveISSEMYM { get; set; } = null!;
         public Rol Rol { get; set; }
