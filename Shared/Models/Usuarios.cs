@@ -7,7 +7,8 @@ namespace Shared.Models
     public partial class Usuarios:  ObservableObject
     {
         public int ID { get; set; }
-        private string Nombre { get; set; } = null!;
+
+        public string Nombre { get; set; } = null!;
         public string Password { get; set; } = null!;
         public string ClaveISSEMYM { get; set; } = null!;
         public Rol Rol { get; set; }

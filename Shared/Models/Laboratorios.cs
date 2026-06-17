@@ -9,16 +9,25 @@ namespace Shared.Models
     public partial class Laboratorios: ObservableObject
     {
         public int ID { get; set; }
+
         [ObservableProperty]
-        public string direccionLora;
+        [JsonPropertyName("nombrelaboratorio")]
+
+        private string direccionLora;
 
         [JsonPropertyName("nombrelaboratorio")]
         [ObservableProperty]
-        public string nombreLaboratoriol;
+        private string nombreLaboratorio;
+
         [ObservableProperty]
-        public int edificio;
+        [JsonPropertyName("nombrelaboratorio")]
+
+        private int edificio;
+
+        [JsonPropertyName("nombrelaboratorio")]
+
         [ObservableProperty]
-        public EstadoLaboratorio estatus;
+        private EstadoLaboratorio estatus;
 
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
         public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();

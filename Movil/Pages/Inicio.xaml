@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Shared.Models;assembly=Shared"
              xmlns:converters="clr-namespace:Movil.Converters"
-             x:DataType="local:Laboratorios"
+             xmlns:viewmodels="clr-namespace:Movil.ViewModels"
+             x:DataType="viewmodels:InicioViewModel"
              x:Class="Movil.Pages.Inicio">
 
     <ContentPage.Resources>
@@ -15,26 +16,29 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="20">
 
-            <Label x:Name="lblTitulo" Text="Laboratorios Disponibles" FontSize="22" FontAttributes="Bold" />
+            <Label Text="{Binding Titulo}" FontSize="22" FontAttributes="Bold" />
 
             <CollectionView x:Name="gridLaboratorios"
-                    SelectionMode="Single"
-                            SelectionChanged="OnLaboratorioSeleccionado"
-                    HeightRequest="350">
+                            ItemsSource="{Binding Laboratorios}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding LaboratorioSeleccionado, Mode=TwoWay}"
+                            SelectionChangedCommand="{Binding SeleccionarLaboratorioCommand}"
+                            SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
+                            HeightRequest="350">
 
                 <CollectionView.ItemsLayout>
                     <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
                 </CollectionView.ItemsLayout>
 
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="local:Laboratorios">
                         <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
 
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup Name="CommonStates">
                                     <VisualState Name="Normal">
                                         <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="{Binding estatus, Converter={StaticResource ColorEstado}}" />
+                                            <Setter Property="BackgroundColor" Value="{Binding Estatus, Converter={StaticResource ColorEstado}}" />
                                             <Setter Property="Stroke" Value="#D1D1D1" />
                                         </VisualState.Setters>
                                     </VisualState>
@@ -42,29 +46,29 @@
                                         <VisualState.Setters>
                                             <Setter Property="BackgroundColor" Value="#5EE3F2FD" />
                                             <Setter Property="Stroke" Value="#005A9C" />
-                                            
                                         </VisualState.Setters>
                                     </VisualState>
                                 </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
 
                             <Grid Padding="10" RowDefinitions="Auto, *, Auto">
-                                <Label Grid.Row="0" Text="{Binding edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
+                                <Label Grid.Row="0" Text="{Binding Edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
 
                                 <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
-                                    <Label Text="{Binding nombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
+                                    <Label Text="{Binding NombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
                                 </VerticalStackLayout>
 
                                 <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="5">
                                     <Label Text="Estado:" FontSize="11" TextColor="LightBlue"/>
-                                    <Label Text="{Binding estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
+                                    <Label Text="{Binding Estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
                                 </HorizontalStackLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-            <Label x:Name="LabelResultado"/>
+
+            <Label Text="{Binding ResultadoJson}"/>
         </VerticalStackLayout>
     </ScrollView>
-</ContentPage> 
+</ContentPage>
