@@ -24,11 +24,7 @@ public partial class IniciarSesion : ContentPage
     }
 
 
-    private async void btnRegistrar_Clicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("Registro");
-
-    }
+  
 
     private async void btnIniciarsesion_Clicked(object sender, EventArgs e)
     {
@@ -77,7 +73,6 @@ public partial class IniciarSesion : ContentPage
             {
 
                 // ¡Éxito! Aquí lo mandas a la pantalla principal de tu app
-                await DisplayAlert("¡Bienvenido!", "Inicio de sesión correcto.", "OK");
                 await Shell.Current.GoToAsync("//mainapp");
                 // Ejemplo de navegación a otra página:
                 // App.Current.MainPage = new NavigationPage(new HomePage());

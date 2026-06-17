@@ -17,8 +17,8 @@
         <VerticalStackLayout Padding="20" Spacing="20">
 
             <Label Text="{Binding Titulo}" FontSize="22" FontAttributes="Bold" />
-
-            <CollectionView x:Name="gridLaboratorios"
+            <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding CargarLaboratoriosCommand}">
+                <CollectionView x:Name="gridLaboratorios"
                             ItemsSource="{Binding Laboratorios}"
                             SelectionMode="Single"
                             SelectedItem="{Binding LaboratorioSeleccionado, Mode=TwoWay}"
@@ -26,49 +26,53 @@
                             SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
                             HeightRequest="350">
 
-                <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
-                </CollectionView.ItemsLayout>
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
 
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="local:Laboratorios">
-                        <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="local:Laboratorios">
+                            <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
 
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup Name="CommonStates">
-                                    <VisualState Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="{Binding Estatus, Converter={StaticResource ColorEstado}}" />
-                                            <Setter Property="Stroke" Value="#D1D1D1" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState Name="Selected">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="#5EE3F2FD" />
-                                            <Setter Property="Stroke" Value="#005A9C" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup Name="CommonStates">
+                                        <VisualState Name="Normal">
+                                            <VisualState.Setters>
+                                                <Setter Property="BackgroundColor" Value="{Binding Estatus, Converter={StaticResource ColorEstado}}" />
+                                                <Setter Property="Stroke" Value="#D1D1D1" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState Name="Selected">
+                                            <VisualState.Setters>
+                                                <Setter Property="BackgroundColor" Value="#5EE3F2FD" />
+                                                <Setter Property="Stroke" Value="#005A9C" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
 
-                            <Grid Padding="10" RowDefinitions="Auto, *, Auto">
-                                <Label Grid.Row="0" Text="{Binding Edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
+                                <Grid Padding="10" RowDefinitions="Auto, *, Auto">
+                                    <Label Grid.Row="0" Text="{Binding Edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
 
-                                <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
-                                    <Label Text="{Binding NombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
-                                </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
+                                        <Label Text="{Binding NombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
+                                    </VerticalStackLayout>
 
-                                <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="5">
-                                    <Label Text="Estado:" FontSize="11" TextColor="LightBlue"/>
-                                    <Label Text="{Binding Estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
-                                </HorizontalStackLayout>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                                    <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="5">
+                                        <Label Text="Estado:" FontSize="11" TextColor="LightBlue"/>
+                                        <Label Text="{Binding Estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
+                                    </HorizontalStackLayout>
+                                </Grid>
 
+
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
             <Label Text="{Binding ResultadoJson}"/>
+
         </VerticalStackLayout>
     </ScrollView>
+
 </ContentPage>

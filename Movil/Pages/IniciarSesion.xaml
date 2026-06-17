@@ -27,12 +27,7 @@
             Clicked="btnIniciarsesion_Clicked"
     />
           
-            <Button
-    x:Name="btnRegistrar"
-    Margin="60,50"
-    Text="Registrarse"
-            Clicked="btnRegistrar_Clicked"
-    /> 
+  
             <Label
                 Text="¿Olvidaste tu contraseña?"
                 TextDecorations="Underline"

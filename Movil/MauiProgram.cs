@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
+using Movil.Pages;
 
 namespace Movil
 {
@@ -20,7 +21,7 @@ namespace Movil
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
-
+            builder.Services.AddTransient<IniciarSesion>();
             return builder.Build();
         }
     }
