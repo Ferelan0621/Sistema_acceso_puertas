@@ -10,7 +10,7 @@
         <Label x:Name="lblUsuario" Content="Label" HorizontalAlignment="Left" Margin="116,20,0,0" VerticalAlignment="Top" Width="259"/>
         <Button x:Name="btnLaboratorio" Content="Laboratorio" HorizontalAlignment="Left" Margin="60,105,0,0" VerticalAlignment="Top" Click="btnLaboratorio_Click"/>
         <Button x:Name="btnPeticiones" Content="Peticiones" HorizontalAlignment="Left" Margin="60,160,0,0" VerticalAlignment="Top" Click="btnPeticiones_Click"/>
-        <Button x:Name="btnUsuarios" Content="Usuarios" HorizontalAlignment="Left" Margin="60,217,0,0" VerticalAlignment="Top" Click="btnUsuarios_Click"/>
+        <Button x:Name="btnUsuarios" Content="Usuarios" HorizontalAlignment="Left" Margin="60,217,0,0" VerticalAlignment="Top" Click="btnUsuarios_Click" Visibility="Hidden"/>
         <Button x:Name="btnCerrarsesion" Content="Cerrar Sesion" HorizontalAlignment="Left" Margin="683,352,0,0" VerticalAlignment="Top" Click="btnCerrarsesion_Click"/>
     </Grid>
 </Window>

@@ -2,12 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:Shared.Models;assembly=Shared"
-        xmlns:converters="clr-namespace:Escritorio.Resources"
-        Title="Laboratorios" Height="600" Width="900" >
+        xmlns:vm="clr-namespace:Escritorio.Mvvm"
+        Title="Laboratorios" Height="600" Width="900">
 
-    <Window.Resources>
-        <converters:ChangeIcon x:Key="IconConverter"/>
-    </Window.Resources>
+    <Window.DataContext>
+        <vm:LaboratorioViewModel/>
+    </Window.DataContext>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -23,11 +23,12 @@
             </Button.Template>
             <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
         </Button>
-        <Ellipse x:Name="StatusIndicator" Grid.Row="0" Width="15" Height="15" Fill="Gray" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
-        <TextBlock Name="lblStatus" Grid.Row="0" Text="Esperando conexión..." VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
+
+        <Ellipse Grid.Row="0" Width="15" Height="15" Fill="{Binding StatusColor}" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
+        <TextBlock Grid.Row="0" Text="{Binding StatusMensaje}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
-            <ItemsControl x:Name="icLaboratorios">
+            <ItemsControl ItemsSource="{Binding ListaLaboratorios}">
 
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -43,16 +44,16 @@
                             </Border.Effect>
 
                             <Grid>
-                                <Label Content="{Binding nombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
+                                <Label Content="{Binding NombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
 
-                                <Image Source="{Binding estadoLab, Converter={StaticResource IconConverter}}" Margin="130,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="25" Width="25" ToolTip="Estado del Lab"/>
+                                
 
-                                <Image x:Name="imgPuerta" Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
+                                <Image Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
                                     <Image.Style>
                                         <Style TargetType="Image">
                                             <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding estadoPuerta}" Value="Abierto">
+                                                <DataTrigger Binding="{Binding DatosPuerta.EstadoPuerta}" Value="Abierto">
                                                     <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -60,20 +61,22 @@
                                     </Image.Style>
                                 </Image>
 
-                                <Label Content="{Binding direccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
+                                <Label Content="{Binding DireccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
 
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,135,0,0" VerticalAlignment="Top">
                                     <StackPanel Margin="0,0,10,0">
                                         <Label Content="Inicio" FontSize="10" HorizontalAlignment="Center" Padding="0"/>
-                                        <Label Content="{Binding horaInicio}" FontWeight="SemiBold" HorizontalAlignment="Center" Padding="0"/>
+                                        <Label Content="{Binding DatosPuerta.HoraInicio}" FontWeight="SemiBold" HorizontalAlignment="Center" Padding="0"/>
                                     </StackPanel>
                                     <StackPanel Margin="10,0,0,0">
                                         <Label Content="Final" FontSize="10" HorizontalAlignment="Center" Padding="0"/>
-                                        <Label Content="{Binding horaFinal}" FontWeight="SemiBold" HorizontalAlignment="Center" Padding="0"/>
+                                        <Label Content="{Binding DatosPuerta.HoraFinal}" FontWeight="SemiBold" HorizontalAlignment="Center" Padding="0"/>
                                     </StackPanel>
                                 </StackPanel>
 
-                                <Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Tag="{Binding ID}" Click="btnAbrirLab_Click" Cursor="Hand"/>
+                                <Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Cursor="Hand"
+            Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+            CommandParameter="{Binding}"/>
                             </Grid>
                         </Border>
                     </DataTemplate>

@@ -32,13 +32,13 @@ namespace Escritorio.Windows
         {
             try
             {
-                // 1. Nos suscribimos al evento que creaste en EscritorioMQTT.cs
+                // Nos suscribimos al evento que creaste en EscritorioMQTT.cs
                 _clienteMqtt.MensajeRecibido += AlRecibirMensajeMqtt;
 
-                // 2. Nos conectamos al broker
+                // Nos conectamos al broker
                 await _clienteMqtt.ConectarAsync();
 
-                // 3. Nos suscribimos al tópico específico del móvil (el que estaba en azul)
+                // Nos suscribimos al tópico específico del móvil (el que estaba en azul)
                 await _clienteMqtt.SuscribirseAsync(MqttServices.conexion);
             }
             catch (Exception ex)
@@ -57,13 +57,12 @@ namespace Escritorio.Windows
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     // Suponiendo que el móvil manda la palabra "abrir"
-                    if (payload == "abrir")
-                    {
-                        MessageBox.Show("Petición del móvil: ¡Abrir puerta!");
+                  
+                        MessageBox.Show(payload);
 
                         // Aquí puedes actualizar el Canvas
                         // MiImagenPuerta.Source = new BitmapImage(new Uri("pack://application:,,,/Images/Puerta_abierta.png"));
-                    }
+                    
                 });
             }
         }
@@ -78,7 +77,7 @@ namespace Escritorio.Windows
         {
             InicioWindow ventanaInicio = new InicioWindow();
             ventanaInicio.Show();
-            this.Hide();
+            this.Close();
         }
     }
 }
