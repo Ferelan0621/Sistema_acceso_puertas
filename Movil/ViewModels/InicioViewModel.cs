@@ -23,6 +23,10 @@ public partial class InicioViewModel : ObservableObject
     private ObservableCollection<Laboratorios> _laboratorios = new();
 
     [ObservableProperty]
+    private bool isRefreshing;
+
+
+    [ObservableProperty]
     private string _titulo = "Cargando...";
 
     [ObservableProperty]
@@ -41,6 +45,32 @@ public partial class InicioViewModel : ObservableObject
 
         // Inicializamos la conexión MQTT en segundo plano sin bloquear el constructor
         _ = ConectarYSuscribirAsync();
+    }
+    [RelayCommand]
+    public async Task RefrescarDatos()
+    {
+        // 1. Si ya está cargando, evitamos que se ejecute dos veces
+        if (IsRefreshing) return;
+
+        try
+        {
+            IsRefreshing = true; // Enciende la ruedita
+
+            // 2. Aquí haces la petición a tu API o base de datos
+            await CargarLaboratoriosAsync();
+        }
+        catch (Exception ex)
+        {
+            // Si algo falla, puedes mostrar una alerta aquí
+            // Usar el signo de interrogación evita que truene si la pantalla no está lista
+            await Application.Current?.MainPage?.DisplayAlert("no jalo we", "no jala mamon", "ok");
+        }
+        finally
+        {
+            // 3. El bloque 'finally' GARANTIZA que, pase lo que pase 
+            // (con error o sin error), la ruedita se va a apagar.
+            IsRefreshing = false;
+        }
     }
 
     [RelayCommand]
@@ -99,7 +129,7 @@ public partial class InicioViewModel : ObservableObject
 
         if (labSeleccionado.Estatus != EstadoLaboratorio.Disponible)
         {
-            await Shell.Current.DisplayAlert("Aviso", "Este laboratorio está ocupado o en mantenimiento. No puedes seleccionarlo.", "OK");
+            await Shell.Current.DisplayAlertAsync("Aviso", $"El Laboratorio {labSeleccionado.NombreLaboratorio} no esta disponible.", "OK");
             return;
         }
 

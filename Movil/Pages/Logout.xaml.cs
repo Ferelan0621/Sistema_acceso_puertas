@@ -9,6 +9,6 @@ public partial class Logout : ContentPage
 
     private async void Cerrar_Sesión_Clicked(object sender, EventArgs e)
     {
-		await Shell.Current.GoToAsync("//IniciarSesion");
+        Application.Current.MainPage = new NavigationPage(new IniciarSesion());
     }
 }
