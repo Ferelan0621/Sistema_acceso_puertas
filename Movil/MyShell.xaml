@@ -19,7 +19,7 @@
         <Tab Title="Historial">
             <ShellContent  
          Route="historial"
-         ContentTemplate="{DataTemplate local:HistorialPrestamos}"/>
+         ContentTemplate="{DataTemplate local:Prestamo}"/>
         </Tab>
 
         <Tab Title="Cerrar Sesion">

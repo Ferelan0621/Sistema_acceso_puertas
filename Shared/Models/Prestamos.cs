@@ -12,14 +12,14 @@ namespace Shared.Models
 
         // Propiedad de navegación hacia el usuario que la creó
         [ObservableProperty]
-        private Usuarios usuario;
+        private Usuarios? usuario;
 
         public int LaboratorioID { get; set; }
         [ObservableProperty]
-        private Laboratorios laboratorio;
+        private Laboratorios? laboratorio;
 
         [ObservableProperty]
-        private DateTime ferchaSolicitud;
+        private DateTime fechaSolicitud;
         [ObservableProperty]
         private DateTime fechaApertura;
         [ObservableProperty]
@@ -28,7 +28,7 @@ namespace Shared.Models
         private DateTime fechaCierreRemoto;
         public int EncargadoID { get; set; }
         [ObservableProperty]
-        private Encargados encargado;
+        private Encargados? encargado;
 
     }
 }

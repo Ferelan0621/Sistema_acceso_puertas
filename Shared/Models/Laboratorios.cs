@@ -30,6 +30,7 @@ namespace Shared.Models
         private EstadoLaboratorio estatus;
 
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
+        [JsonIgnore]
         public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();
         
 

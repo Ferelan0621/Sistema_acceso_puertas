@@ -10,7 +10,6 @@ public partial class MyShell : Shell
 
         Routing.RegisterRoute("Registro", typeof(Registro));
         Routing.RegisterRoute("Password", typeof(Password));
-        Routing.RegisterRoute("Prestamo", typeof(Prestamo));
 
 
     }

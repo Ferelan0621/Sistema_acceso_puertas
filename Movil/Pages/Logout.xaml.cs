@@ -9,6 +9,7 @@ public partial class Logout : ContentPage
 
     private async void Cerrar_Sesión_Clicked(object sender, EventArgs e)
     {
-        Application.Current.MainPage = new NavigationPage(new IniciarSesion());
+        await Shell.Current.DisplayAlert("Cerrar Sesión", "¿Estás seguro de que quieres cerrar sesión?", "Sí", "No");
+        await Shell.Current.GoToAsync("//IniciarSesion");
     }
 }

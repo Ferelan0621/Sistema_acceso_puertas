@@ -1,34 +1,52 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Shared.Models;assembly=Shared"
+             xmlns:viewmodels="clr-namespace:Movil.ViewModels"
+             x:DataType="viewmodels:PrestamosViewModel"
              x:Class="Movil.Pages.Prestamo"
-             xmlns:local ="clr-namespace:Shared.Models;assembly=Shared"
-             x:DataType="local:Laboratorios" 
-             
-             Title="Prestamo">
-    <VerticalStackLayout>
+             Title="Mis Préstamos">
 
-        <TimePicker
-            x:Name="timeStart"
-            Format="T"
-            />
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
 
-        <TimePicker
-            x:Name="timeFinish"
-            Format="T"/>
-        
-        
-        
-               
+        <Label Grid.Row="0" 
+               Text="{Binding Titulo}" 
+               FontSize="22" 
+               FontAttributes="Bold" />
 
-        <Button 
-            x:Name="prestamo"
-            Text="Pedir"
-            Clicked="prestamo_Clicked"
-            />
-        <Label 
-            x:Name="LabelResultado"
-            Text="yes"/>
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Prestamos}"
+                        SelectionMode="None">
 
-    </VerticalStackLayout>
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="local:Prestamos">
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="#005A9C" Padding="15">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="5">
+
+                            <Label Grid.Row="0" 
+                                   Text="{Binding Laboratorio.NombreLaboratorio, StringFormat='Laboratorio: {0}'}" 
+                                   FontSize="16" FontAttributes="Bold" TextColor="#FF7CB7DE" />
+
+                            <HorizontalStackLayout Grid.Row="1" Spacing="5">
+                                <Label Text="Fecha Solicitud:" FontSize="12" TextColor="Gray" />
+                                <Label Text="{Binding FechaSolicitud, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
+                                       FontSize="12" FontAttributes="Bold" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Grid.Row="2" Spacing="5">
+                                <Label Text="Estado:" FontSize="12" TextColor="Gray" />
+                                <Label Text="{Binding FechaApertura, StringFormat='Apertura: {0:HH:mm}'}" 
+                                       FontSize="12" TextColor="Green" FontAttributes="Bold"/>
+                            </HorizontalStackLayout>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
 </ContentPage>

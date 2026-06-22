@@ -2,11 +2,13 @@
 using Shared.Models;
 using Shared.Services;
 using System.Buffers.Text;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Movil.Services
 {
+ 
     public class ApiService
     {
         // Cambia esta URL por la IP de tu máquina en tu red local si pruebas en un dispositivo físico
@@ -14,6 +16,7 @@ namespace Movil.Services
         private readonly HttpClient _httpClient;
         private const string BaseUrl = ConexionHTTP.BaseUrl;
 
+        private readonly JsonSerializerOptions _jsonOptions;
 
         public ApiService()
         {
@@ -114,6 +117,131 @@ namespace Movil.Services
             }
         }
 
+        public async Task EscucharActualizacionesSSEAsync(Action<List<Laboratorios>> alActualizar, CancellationToken token)
+        {
+            var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            // El handler y el HttpClient se instancian una sola vez afuera para reutilizar la base
+            var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true };
+            using var sseClient = new HttpClient(handler) { BaseAddress = new Uri(BaseUrl) };
+            sseClient.Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite);
+
+            // BUCLE MAESTRO: Si la conexión se cae, vuelve a intentar mientras no se cancele el token
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, "Laboratorios/stream");
+                    request.Headers.Add("Accept", "text/event-stream");
+
+                    using var respuesta = await sseClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
+                    respuesta.EnsureSuccessStatusCode();
+
+                    using var stream = await respuesta.Content.ReadAsStreamAsync(token);
+                    using var reader = new StreamReader(stream);
+
+                    while (!reader.EndOfStream && !token.IsCancellationRequested)
+                    {
+                        var linea = await reader.ReadLineAsync();
+
+                        // Si la línea es nula, significa que el servidor cerró el stream. 
+                        // Rompemos este ciclo para que el Bucle Maestro reinicie la conexión.
+                        if (linea == null) break;
+
+                        if (!string.IsNullOrWhiteSpace(linea) && linea.StartsWith("data:"))
+                        {
+                            var jsonPuro = linea.Substring(5).Trim();
+                            var elementos = JsonSerializer.Deserialize<List<Laboratorios>>(jsonPuro, opcionesJson);
+
+                            if (elementos != null && elementos.Count > 0)
+                            {
+                                MainThread.BeginInvokeOnMainThread(() =>
+                                {
+                                    alActualizar(elementos);
+                                });
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // La cancelación se pidió desde el ViewModel (ej. cerraste la pantalla)
+                    Console.WriteLine("Escucha de laboratorios detenida voluntariamente.");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Conexión SSE interrumpida: {ex.Message}. Reconectando en 2 segundos...");
+                    // Esperamos 2 segundos antes de reconectar para no bombardear tu Web API si se cae el server
+                    await Task.Delay(2000, token);
+                }
+            }
+        }
+        public async Task<List<Prestamos>> ObtenerPrestamosPorUsuarioAsync(int usuarioId)
+        {
+            try
+            {
+                string url = $"Prestamos/usuario/{usuarioId}";
+                using var response = await _httpClient.GetAsync(url);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return new List<Prestamos>(); // Retorna lista vacía si no hay registros
+                }
+
+                response.EnsureSuccessStatusCode();
+                string json = await response.Content.ReadAsStringAsync();
+
+                return JsonSerializer.Deserialize<List<Prestamos>>(json, _jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en ObtenerPrestamosPorUsuarioAsync: {ex.Message}");
+                throw;
+            }
+        }
+
+        
+        public async Task EscucharPrestamosSSEAsync(int usuarioId, Action<List<Prestamos>> onDataReceived, CancellationToken cancellationToken)
+        {
+                string url = $"Prestamos/usuario/{usuarioId}";
+
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var reader = new StreamReader(stream);
+
+                while (!cancellationToken.IsCancellationRequested && !reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+
+                    if (!string.IsNullOrWhiteSpace(line) && line.StartsWith("data: "))
+                    {
+                        string json = line.Substring("data: ".Length);
+                        var listaPrestamos = JsonSerializer.Deserialize<List<Prestamos>>(json, _jsonOptions);
+
+                        if (listaPrestamos != null)
+                        {
+                            onDataReceived?.Invoke(listaPrestamos);
+                        }
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Tarea cancelada por el ciclo de vida de la página. Comportamiento normal.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en canal SSE Préstamos: {ex.Message}");
+            }
+        }
 
     }
 }

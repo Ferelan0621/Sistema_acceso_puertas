@@ -10,19 +10,30 @@ public partial class Inicio : ContentPage
     {
         InitializeComponent();
 
-        // Asignamos el ViewModel como BindingContext
+        // Asignamos el ViewModel
         _viewModel = new InicioViewModel();
-        this.BindingContext = _viewModel;
+        BindingContext = _viewModel;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
 
-        // Ejecutamos el comando de carga usando el comando generado por el Toolkit
+        // 1. Cargamos la lista inicial
         if (_viewModel.CargarLaboratoriosCommand.CanExecute(null))
         {
             _viewModel.CargarLaboratoriosCommand.Execute(null);
         }
+
+        // 2. Iniciamos la conexión SSE para recibir actualizaciones en tiempo real
+        _viewModel.IniciarEscuchaSSE();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        // 3. ¡IMPORTANTE! Cerramos la conexión SSE al salir para liberar recursos
+        _viewModel.DetenerEscuchaSSE();
     }
 }

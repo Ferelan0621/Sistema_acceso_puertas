@@ -14,6 +14,9 @@ namespace Movil.ViewModels;
 [QueryProperty(nameof(LaboratorioActual), "LaboratorioClave")]
 public partial class InicioViewModel : ObservableObject
 {
+
+    private CancellationTokenSource _sseCts;
+
     private readonly ApiService _apiService = new ApiService();
     private readonly ConexionMqtt _miBroker;
     private readonly int _userId;
@@ -21,10 +24,6 @@ public partial class InicioViewModel : ObservableObject
     // Propiedades observables automáticas gracias al Toolkit
     [ObservableProperty]
     private ObservableCollection<Laboratorios> _laboratorios = new();
-
-    [ObservableProperty]
-    private bool isRefreshing;
-
 
     [ObservableProperty]
     private string _titulo = "Cargando...";
@@ -44,50 +43,52 @@ public partial class InicioViewModel : ObservableObject
         _userId = Preferences.Default.Get("usuarioID", 0);
 
         // Inicializamos la conexión MQTT en segundo plano sin bloquear el constructor
-        _ = ConectarYSuscribirAsync();
+        _ = IniciarComunicacionMqtt();
     }
-    [RelayCommand]
-    public async Task RefrescarDatos()
+    
+
+
+    public void IniciarEscuchaSSE()
     {
-        // 1. Si ya está cargando, evitamos que se ejecute dos veces
-        if (IsRefreshing) return;
-
-        try
-        {
-            IsRefreshing = true; // Enciende la ruedita
-
-            // 2. Aquí haces la petición a tu API o base de datos
-            await CargarLaboratoriosAsync();
-        }
-        catch (Exception ex)
-        {
-            // Si algo falla, puedes mostrar una alerta aquí
-            // Usar el signo de interrogación evita que truene si la pantalla no está lista
-            await Application.Current?.MainPage?.DisplayAlert("no jalo we", "no jala mamon", "ok");
-        }
-        finally
-        {
-            // 3. El bloque 'finally' GARANTIZA que, pase lo que pase 
-            // (con error o sin error), la ruedita se va a apagar.
-            IsRefreshing = false;
-        }
+        _sseCts = new CancellationTokenSource();
+        _ = _apiService.EscucharActualizacionesSSEAsync(
+            datosNuevos => ActualizarListaUI(datosNuevos),
+            _sseCts.Token
+        );
     }
 
+    public void DetenerEscuchaSSE()
+    {
+        _sseCts?.Cancel();
+        _sseCts?.Dispose();
+    }
+
+    private void ActualizarListaUI(List<Laboratorios> nuevosDatos)
+    {
+        // Limpiamos y repoblamos la misma instancia de la colección.
+        // Esto mantiene vivo el binding de tu vista.
+        Laboratorios.Clear();
+
+        foreach (var lab in nuevosDatos)
+        {
+            Laboratorios.Add(lab);
+        }
+
+        Titulo = "Selecciona un Lab";
+    }
+
+
+    // Asegúrate de actualizar tu método CargarLaboratoriosAsync para usar el nuevo estado
     [RelayCommand]
     private async Task CargarLaboratoriosAsync()
     {
         try
         {
             var listaLabs = await _apiService.ObtenerLaboratoriosAsync();
-
-            if (listaLabs != null && listaLabs.Count > 0)
+            if (listaLabs != null)
             {
                 Laboratorios = new ObservableCollection<Laboratorios>(listaLabs);
                 Titulo = "Selecciona un Lab";
-            }
-            else
-            {
-                Titulo = "No hay laboratorios";
             }
         }
         catch (Exception ex)
@@ -101,7 +102,7 @@ public partial class InicioViewModel : ObservableObject
         try
         {
             await _miBroker.ConectarAsync();
-            await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
+            await _miBroker.SuscribirseAsync(MqttServices.respuesta);
         }
         catch (Exception ex)
         {
@@ -160,11 +161,45 @@ public partial class InicioViewModel : ObservableObject
         try
         {
             await _miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
-            await Shell.Current.DisplayAlert("Éxito", "La petición de apertura se envió correctamente.", "OK");
+            await Shell.Current.DisplayAlert("Éxito", "La petici" +
+                "ón de apertura se envió correctamente.", "OK");
         }
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Error de Envío", $"Falta conexión o hubo un error al enviar el mensaje: {ex.Message}", "OK");
+        }
+    }
+    
+    private async Task IniciarComunicacionMqtt()
+    {
+        try
+        {
+            // 1. Nos suscribimos al evento que creaste en EscritorioMQTT.cs
+            _miBroker.MensajeRecibido += AlRecibirMensajeMqtt;
+
+            // 2. Nos conectamos al broker
+            await _miBroker.ConectarAsync();
+
+            // 3. Nos suscribimos al tópico específico del móvil (el que estaba en azul)
+            await _miBroker.SuscribirseAsync(MqttServices.respuesta);
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Error De Conexion", $"Error al conectar MQTT: {ex.Message}", "Ok");
+        }
+    }
+
+    // Este método se dispara gracias al "MensajeRecibido?.Invoke(topic, payload);" de tu clase
+    private void AlRecibirMensajeMqtt(string topic, string payload)
+    {
+        if (topic == MqttServices.respuesta)
+        {
+            // AHORA SÍ pasamos al hilo principal
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
+                // Aquí ya puedes actualizar tu Canvas tranquilamente
+            });
         }
     }
 }

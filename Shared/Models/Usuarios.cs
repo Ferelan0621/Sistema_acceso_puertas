@@ -14,6 +14,7 @@ namespace Shared.Models
         public Rol Rol { get; set; }
 
         // Relación uno a muchos con Prestamos
+        [JsonIgnore]
         public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
     }
     public class LoginRequest

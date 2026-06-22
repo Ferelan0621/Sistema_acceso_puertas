@@ -28,28 +28,7 @@ public partial class IniciarSesion : ContentPage
 
     private async void btnIniciarsesion_Clicked(object sender, EventArgs e)
     {
-        //if (string.IsNullOrWhiteSpace(etUsuario.Text) || string.IsNullOrWhiteSpace(etPasword.Text))
-        //{
-        //    await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
-        //    return;
-        //}
-
-        //// 2. Llamar al endpoint a través de tu ApiService
-        //Usuarios usuarioLogueado = await _apiService.LoginAsync(etUsuario.Text, etPasword.Text);
-
-        //// 3. Validar la respuesta del API
-        //if (usuarioLogueado != null)
-        //{
-        //    await DisplayAlert("¡Bienvenido!", $"Hola {usuarioLogueado.Nombre}", "OK");
-
-        //    // Aquí puedes navegar a tu pantalla principal (ejemplo)
-        //     await Shell.Current.GoToAsync("//mainapp0");
-        //}
-        //else
-        //{
-        //    await DisplayAlert("Error de acceso", "Clave IMSSEMYM o contraseña incorrectas.", "OK");
-        //}
-        // 1. Recuperamos los datos de las cajas de texto
+      
         string clave = etClave.Text?.Trim();
         string password = etPasword.Text?.Trim();
 
@@ -73,9 +52,8 @@ public partial class IniciarSesion : ContentPage
             {
 
                 // ¡Éxito! Aquí lo mandas a la pantalla principal de tu app
-                await Shell.Current.GoToAsync("//mainapp");
-                // Ejemplo de navegación a otra página:
-                // App.Current.MainPage = new NavigationPage(new HomePage());
+                await Shell.Current.GoToAsync("//inicio");
+               
             }
             else
             {
