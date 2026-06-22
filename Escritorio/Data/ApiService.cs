@@ -6,12 +6,13 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.IO;
+using System.Threading;
 
 namespace Escritorio.Data
 {
     internal class ApiService
     {
-        // Cambia esta URL por la IP de tu máquina en tu red local si pruebas en un dispositivo físico
         // o 10.0.2.2 si usas el emulador de Android.
         private readonly HttpClient _httpClient;
         private const string BaseUrl = ConexionHTTP.BaseUrl;
@@ -19,7 +20,7 @@ namespace Escritorio.Data
 
         public ApiService()
         {
-            // Nota: Para desarrollo local con certificados HTTPS autofirmados en Android,
+            // Para desarrollo local con certificados HTTPS autofirmados en Android,
             // necesitas un HttpClientHandler especial que ignore los errores de SSL.
             var handler = new HttpClientHandler
             {
@@ -85,6 +86,63 @@ namespace Escritorio.Data
                 // Aquí puedes manejar el error (ej. mostrar una alerta, logs)
                 Console.WriteLine($"Error en la API: {ex.Message}");
                 return new List<Laboratorios>();
+            }
+        }
+        public async Task EscucharPuertasSSEAsync(Action<SensorPuerta> onMensajeRecibido, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // OJO: Cambia esta ruta por la URL real de tu API que emite los eventos SSE
+                using var request = new HttpRequestMessage(HttpMethod.Get, "Laboratorios/stream-puertas");
+
+                // Le decimos al servidor que queremos mantener la conexión abierta recibiendo eventos
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+                // HttpCompletionOption.ResponseHeadersRead es CLAVE para que no espere a que acabe la petición
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var reader = new StreamReader(stream);
+
+                // Bucle infinito que lee línea por línea mientras no se cancele
+                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+                {
+                    var line = await reader.ReadLineAsync();
+
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    // SSE estándar manda los datos empezando con "data: "
+                    if (line.StartsWith("data: "))
+                    {
+                        var json = line.Substring(6); // Cortamos la palabra "data: "
+
+                        try
+                        {
+                            var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            var evento = JsonSerializer.Deserialize<SensorPuerta>(json, opcionesJson);
+
+                            if (evento != null)
+                            {
+                                // Disparamos la acción de vuelta al ViewModel
+                                onMensajeRecibido?.Invoke(evento);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error parseando JSON del SSE: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine("Conexión SSE terminada a propósito.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error de conexión SSE: {ex.Message}");
+                // Aquí podrías agregar un Task.Delay y volver a llamar a la función para autoconectar
             }
         }
     }

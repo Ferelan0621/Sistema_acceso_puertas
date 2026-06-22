@@ -29,6 +29,9 @@ namespace Shared.Models
         [ObservableProperty]
         private EstadoLaboratorio estatus;
 
+        [JsonIgnore]
+        public SensorPuerta DatosPuerta { get; set; } = new SensorPuerta();
+
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
         [JsonIgnore]
         public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();
