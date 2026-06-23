@@ -11,7 +11,7 @@ namespace Shared.Models
         public int ID { get; set; }
 
         [ObservableProperty]
-        [JsonPropertyName("nombrelaboratorio")]
+        [JsonPropertyName("direccionLora")]
 
         private string direccionLora;
 
@@ -20,17 +20,15 @@ namespace Shared.Models
         private string nombreLaboratorio;
 
         [ObservableProperty]
-        [JsonPropertyName("nombrelaboratorio")]
+        [JsonPropertyName("edificio")]
 
         private int edificio;
 
-        [JsonPropertyName("nombrelaboratorio")]
+        [JsonPropertyName("estatus")]
 
         [ObservableProperty]
         private EstadoLaboratorio estatus;
 
-        [JsonIgnore]
-        public SensorPuerta DatosPuerta { get; set; } = new SensorPuerta();
 
         // RELACIÓN: Un laboratorio tiene asignados muchos encargados
         [JsonIgnore]
