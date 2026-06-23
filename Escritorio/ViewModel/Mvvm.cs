@@ -52,26 +52,28 @@ namespace Escritorio.Mvvm
                     ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
                 }
 
-                StatusMensaje = "Conectando al stream SSE...";
+                StatusMensaje = "Conectando al ESP32 por MQTT...";
 
-                // Inicializamos el token para poder apagar la conexión cuando se cierre la ventana
-                _sseCancellationTokenSource = new CancellationTokenSource();
+                await _miBroker.ConectarAsync();
 
-                // Lanzamos la escucha de SSE en segundo plano
-                _ = _apiService.EscucharPuertasSSEAsync(ProcesarEventoPuerta, _sseCancellationTokenSource.Token);
+                // 1. Suscripción al estatus general
+                await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
 
-                // Indicador visual de que estamos conectados (puedes ajustarlo según tu lógica)
+                // 2. ADAPTACIÓN CLAVE: Le agregamos el comodín "/#" al doorTopic
+                // Esto le dice a tu app: "Escucha todo lo que empiece con UPT/LABORATORIOS/doorStatus/"
+                await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
+
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     StatusColor = new SolidColorBrush(Colors.Green);
-                    StatusMensaje = "SSE Conectado y escuchando en vivo";
+                    StatusMensaje = "MQTT Conectado al ESP32";
                 });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error en la inicialización: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error en la inicialización: {ex.Message}");
                 StatusColor = new SolidColorBrush(Colors.Red);
-                StatusMensaje = "Error de conexión";
+                StatusMensaje = "Error de conexión MQTT";
             }
         }
 
@@ -102,10 +104,9 @@ namespace Escritorio.Mvvm
         {
             if (string.IsNullOrEmpty(payload)) return;
 
-            // 1. Estatus del Gateway
+            // Estatus del Gateway
             if (topic == MqttServices.statusTopic)
             {
-                // Dispatcher para que no crashee por actualizar la UI desde otro hilo
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     bool online = payload.ToLower().Contains("online");
@@ -115,29 +116,41 @@ namespace Escritorio.Mvvm
                 return;
             }
 
-            // 2. Sensores de las puertas
-            /*if (topic.StartsWith(MqttServices.doorTopic))
+            // 3. ADAPTACIÓN DEL TOPICO DE LA PUERTA
+            if (topic.StartsWith(MqttServices.doorTopic))
             {
+                // Dividimos el tópico por las diagonales '/'
+                // Ejemplo: "UPT/LABORATORIOS/doorStatus/LAB01" se convierte en un arreglo de 4 partes.
                 string[] parts = topic.Split('/');
+
+                // Verificamos que tenga la parte extra (el ID del laboratorio)
                 if (parts.Length > 3)
                 {
+                    // parts[3] contendría "LAB01"
                     string idLabMqtt = parts[3];
-                    bool abierta = payload.ToLower().Contains("abierta") || payload.Contains("true") || payload.Contains("1") || payload.Contains("open");
+
+                    // Verificamos si el mensaje indica que se abrió
+                    bool abierta = payload.ToLower().Contains("abierta") ||
+                                   payload.Contains("true") ||
+                                   payload.Contains("1") ||
+                                   payload.Contains("open");
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
+                        // Buscamos en nuestra lista el laboratorio que coincida con el ID que mandó el ESP32
+                        // Nota: Asegúrate de que DireccionLora (o la propiedad que uses) coincida con el identificador del ESP32
                         var laboratorio = ListaLaboratorios.FirstOrDefault(l =>
                             l.DireccionLora != null &&
                             l.DireccionLora.Equals(idLabMqtt, StringComparison.OrdinalIgnoreCase));
 
                         if (laboratorio != null)
                         {
-                            // MAGIA MVVM: Solo cambias esto y la tarjeta en XAML se actualiza sola
-                            laboratorio.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
+                            // Actualizamos la interfaz gráfica al instante
+                            laboratorio.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
                         }
                     });
                 }
-            }*/
+            }
         }
 
         // Este Comando reemplaza al viejo evento btnAbrirLab_Click

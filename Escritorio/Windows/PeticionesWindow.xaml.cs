@@ -19,52 +19,9 @@ namespace Escritorio.Windows
     /// </summary>
     public partial class PeticionesWindow : Window
     {
-        private EscritorioMQTT _clienteMqtt;
-        public string nombreEncargado;
         public PeticionesWindow()
         {
             InitializeComponent();
-
-            _clienteMqtt = new EscritorioMQTT();
-            _ = IniciarComunicacionMqtt();
-        }
-        private async Task IniciarComunicacionMqtt()
-        {
-            try
-            {
-                // Nos suscribimos al evento que creaste en EscritorioMQTT.cs
-                _clienteMqtt.MensajeRecibido += AlRecibirMensajeMqtt;
-
-                // Nos conectamos al broker
-                await _clienteMqtt.ConectarAsync();
-
-                // Nos suscribimos al tópico específico del móvil (el que estaba en azul)
-                await _clienteMqtt.SuscribirseAsync(MqttServices.conexion);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al conectar MQTT: {ex.Message}");
-            }
-        }
-
-        // Este método se dispara gracias al "MensajeRecibido?.Invoke(topic, payload);" de tu clase
-        private void AlRecibirMensajeMqtt(string topic, string payload)
-        {
-            // Verificamos que el mensaje venga del tópico del móvil
-            if (topic == MqttServices.conexion)
-            {
-                // RECUERDA: Pasamos al hilo principal para poder modificar la interfaz (ej. tus PNGs en el Canvas)
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    // Suponiendo que el móvil manda la palabra "abrir"
-                  
-                        MessageBox.Show(payload);
-
-                        // Aquí puedes actualizar el Canvas
-                        // MiImagenPuerta.Source = new BitmapImage(new Uri("pack://application:,,,/Images/Puerta_abierta.png"));
-                    
-                });
-            }
         }
 
         private void btnHistorialpeticiones_Click(object sender, RoutedEventArgs e)

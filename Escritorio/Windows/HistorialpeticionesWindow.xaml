@@ -4,9 +4,37 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Escritorio.Windows"
+        xmlns:vm="clr-namespace:Escritorio.ViewModel"
         mc:Ignorable="d"
-        Title="HistorialpeticionesWindow" Height="450" Width="800">
+        Title="Historial de Peticiones" Height="450" Width="800">
+
+    <Window.DataContext>
+        <vm:HistorialPeticionesViewModel />
+    </Window.DataContext>
+
     <Grid>
-        
+        <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" Margin="20,26,0,0" VerticalAlignment="Top" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Button.Template>
+            <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
+        </Button>
+
+        <Label Content="Historial de Accesos" HorizontalAlignment="Left" Margin="60,26,0,0" VerticalAlignment="Top" FontSize="16" FontWeight="Bold"/>
+
+        <ListView x:Name="lvHistorial" ItemsSource="{Binding ListaHistorial}" Margin="20,70,20,20">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID Préstamo" DisplayMemberBinding="{Binding ID}" Width="90"/>
+                    <GridViewColumn Header="ID Usuario" DisplayMemberBinding="{Binding UsuarioID}" Width="100"/>
+                    <GridViewColumn Header="ID Laboratorio" DisplayMemberBinding="{Binding LaboratorioID}" Width="100"/>
+                    <GridViewColumn Header="Fecha Solicitud" DisplayMemberBinding="{Binding FechaSolicitud, StringFormat='dd/MM/yyyy HH:mm'}" Width="150"/>
+                    <GridViewColumn Header="Fecha Apertura" DisplayMemberBinding="{Binding FechaApertura, StringFormat='dd/MM/yyyy HH:mm'}" Width="150"/>
+                    <GridViewColumn Header="Fecha Cierre" DisplayMemberBinding="{Binding FechaCierre, StringFormat='dd/MM/yyyy HH:mm'}" Width="150"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
     </Grid>
 </Window>
