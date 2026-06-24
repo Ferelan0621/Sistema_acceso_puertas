@@ -29,11 +29,21 @@ namespace Shared.Models
         [ObservableProperty]
         private EstadoLaboratorio estatus;
 
+		[ObservableProperty]
+		[JsonPropertyName("datosPuerta")]
+		private PuertaData datosPuerta = new PuertaData();
 
-        // RELACIÓN: Un laboratorio tiene asignados muchos encargados
-        [JsonIgnore]
+
+		// RELACIÓN: Un laboratorio tiene asignados muchos encargados
+		[JsonIgnore]
         public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();
         
 
     }
+
+	public partial class PuertaData : ObservableObject
+	{
+		[ObservableProperty]
+		private string estadoPuerta;
+	}
 }
