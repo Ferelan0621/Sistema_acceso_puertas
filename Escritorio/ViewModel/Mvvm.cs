@@ -46,7 +46,7 @@ namespace Escritorio.Mvvm
 
 				if (labs != null)
 				{
-					// 🔑 FIX 3: Aseguramos que cada lab tenga DatosPuerta inicializado
+					// Aseguramos que cada lab tenga DatosPuerta inicializado
 					foreach (var lab in labs)
 					{
 						if (lab.DatosPuerta == null)
@@ -97,49 +97,63 @@ namespace Escritorio.Mvvm
 					{
 						bool abierta = payload.Contains("open") || payload.Contains("1") || payload.Contains("true");
 						lab.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
-
-						// 🔑 FIX 4: Fuerza refresco del binding anidado
 						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
 					});
 				}
 			}
-			// 3. Peticiones del Móvil
+			// 3. Peticiones del Móvil — busca nombre y cargo en la API
 			else if (topic == "peticion/movil/conexion")
 			{
-				try
+				// Lanzamos tarea async desde el handler sync
+				_ = ProcesarPeticionMovilAsync(payload);
+			}
+		}
+
+		// 🔑 Método async separado para poder hacer await a la API
+		private async Task ProcesarPeticionMovilAsync(string payload)
+		{
+			try
+			{
+				var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+				var datos = JsonSerializer.Deserialize<PeticionMovil>(payload, opcionesJson);
+
+				if (datos == null)
 				{
-					var datos = JsonSerializer.Deserialize<PeticionMovil>(payload);
-					if (datos == null) return;
-
-					var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
-
-					if (lab != null)
-					{
-						Application.Current.Dispatcher.Invoke(() =>
-						{
-							// Actualiza las propiedades internas de DatosPuerta
-							lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(datos.NombreUsuario)
-								? datos.NombreUsuario
-								: "Usuario #" + datos.UsuarioID;
-
-							lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(datos.Cargo)
-								? datos.Cargo
-								: "Sin asignar";
-
-							lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
-							lab.DatosPuerta.EstadoPuerta = "Abierto";
-
-							// 🔑 FIX 5: Fuerza que la card entera refresque DatosPuerta
-							lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-						});
-					}
+					System.Diagnostics.Debug.WriteLine("[MQTT] Payload deserializado como null");
+					return;
 				}
-				catch (JsonException ex)
+
+				System.Diagnostics.Debug.WriteLine($"[MQTT] Petición recibida - UsuarioID: {datos.UsuarioID}, LaboratorioID: {datos.LaboratorioID}");
+
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
+
+				if (lab == null)
 				{
-					// Log del error para debugging
-					System.Diagnostics.Debug.WriteLine($"[MQTT] Error deserializando peticion: {ex.Message}");
-					System.Diagnostics.Debug.WriteLine($"[MQTT] Payload recibido: {payload}");
+					System.Diagnostics.Debug.WriteLine($"[MQTT] No se encontró laboratorio con ID: {datos.LaboratorioID}");
+					return;
 				}
+
+				// 🔑 Consulta el nombre y cargo del usuario en la API
+				var usuario = await _apiService.ObtenerUsuarioPorIdAsync(datos.UsuarioID);
+
+				
+				System.Diagnostics.Debug.WriteLine($"[API] Usuario obtenido: {usuario?.Nombre ?? "null"} - {usuario?.Rol.ToString() ?? "null"}");
+
+				Application.Current.Dispatcher.Invoke(() =>
+				{
+					lab.DatosPuerta.UsuarioNombre = usuario?.Nombre ?? "Usuario #" + datos.UsuarioID;
+					// 🔑 Rol es un enum, lo convertimos a texto legible
+					lab.DatosPuerta.Cargo = usuario != null ? usuario.Rol.ToString() : "Sin asignar";
+					lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
+					lab.DatosPuerta.EstadoPuerta = "Abierto";
+
+					// Fuerza refresco del binding anidado
+					lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+				});
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[MQTT] Error procesando petición: {ex.Message}");
 			}
 		}
 

@@ -2,20 +2,18 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Windows;
-using CommunityToolkit.Mvvm.ComponentModel; // Agregado para MVVM moderno
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Escritorio.Data;
 using Shared.Models;
 using Shared.Services;
 
-
 namespace Escritorio.ViewModel
 {
-	// 1. SOLUCIÓN AL ERROR CS0260: Se agrega 'partial' y hereda de ObservableObject
 	public partial class PeticionesViewModel : ObservableObject
 	{
-		// Usamos EXCLUSIVAMENTE el broker global de SharedData
 		private readonly EscritorioMQTT _miBroker = SharedData.Instance.Broker;
+		private readonly ApiService _apiService = new ApiService();
 
 		public ObservableCollection<Laboratorios> ListaLaboratorios => SharedData.Instance.ListaLaboratorios;
 
@@ -29,15 +27,12 @@ namespace Escritorio.ViewModel
 
 		private async void InicializarMQTT()
 		{
-			// 2. SOLUCIÓN ARQUITECTÓNICA: Nos colgamos del evento del Broker global, NO creamos uno nuevo.
 			_miBroker.MensajeRecibido += MqttClient_MensajeRecibido;
 
 			try
 			{
-				// Nos aseguramos de estar conectados y nos suscribimos al tópico de peticiones
 				await _miBroker.ConectarAsync();
-				string topicoSuscripcion = MqttServices.conexion;
-				await _miBroker.SuscribirseAsync(topicoSuscripcion);
+				await _miBroker.SuscribirseAsync(MqttServices.conexion);
 			}
 			catch (Exception ex)
 			{
@@ -51,7 +46,6 @@ namespace Escritorio.ViewModel
 			{
 				try
 				{
-					// Solo procesamos si el mensaje viene del tópico de conexión móvil
 					if (topic == MqttServices.conexion)
 					{
 						var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -61,18 +55,16 @@ namespace Escritorio.ViewModel
 						{
 							ListaPeticiones.Add(nuevaPeticion);
 
-							// Buscamos la tarjeta del lab
+							// Mostramos datos provisionales en la card mientras llega la respuesta
 							var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == nuevaPeticion.LaboratorioID);
 							if (lab != null)
 							{
-								// Llenamos los campos visuales de tu Card con los datos del móvil
-								// Usamos el operador ?? por si el móvil no manda Nombre o Cargo, que no se quede en blanco
-								lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(nuevaPeticion.NombreUsuario) ? nuevaPeticion.NombreUsuario : $"ID: {nuevaPeticion.UsuarioID}";
-								lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(nuevaPeticion.Cargo) ? nuevaPeticion.Cargo : "Pendiente...";
+								lab.DatosPuerta.UsuarioNombre = $"ID: {nuevaPeticion.UsuarioID}";
+								lab.DatosPuerta.Cargo = "Pendiente...";
 								lab.DatosPuerta.HoraInicio = nuevaPeticion.FechaPrestamo;
+								lab.OnPropertyChanged(nameof(lab.DatosPuerta));
 							}
 						}
-
 					}
 				}
 				catch (Exception ex)
@@ -82,7 +74,6 @@ namespace Escritorio.ViewModel
 			});
 		}
 
-		// 3. USO CORRECTO DE TOOLKIT: [RelayCommand] genera automáticamente 'AceptarPeticionCommand'
 		[RelayCommand]
 		private async void AceptarPeticion(PeticionMovil peticion)
 		{
@@ -90,6 +81,9 @@ namespace Escritorio.ViewModel
 
 			try
 			{
+				// 🔑 Consulta nombre y rol real del usuario en la API
+				var usuario = await _apiService.ObtenerUsuarioPorIdAsync(peticion.UsuarioID);
+
 				var respuestaPayload = new
 				{
 					estatus = "aceptado",
@@ -99,22 +93,26 @@ namespace Escritorio.ViewModel
 				};
 
 				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
-
 				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
 				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonRespuesta);
 
 				string jsonAbrir = JsonSerializer.Serialize(new { d = peticion.LaboratorioID.ToString(), c = "abrir" });
 				await _miBroker.PublicarMensajeAsync(MqttServices.abrir, jsonAbrir);
 
-				MessageBox.Show($"Has ACEPTADO el acceso al Lab {peticion.LaboratorioID} para el usuario {peticion.UsuarioID}", "Aprobado");
-
+				// 🔑 Actualiza la card con nombre y rol real
 				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
 				if (lab != null)
 				{
-					// Mantenemos el nombre y la hora de inicio, pero confirmamos el cargo/estado
-					lab.DatosPuerta.Cargo = "Aprobado / Adentro";
-					lab.DatosPuerta.EstadoPuerta = "Abierto"; // Esto debería cambiar el ícono de tu puerta si lo tienes configurado
+					Application.Current.Dispatcher.Invoke(() =>
+					{
+						lab.DatosPuerta.UsuarioNombre = usuario?.Nombre ?? $"Usuario #{peticion.UsuarioID}";
+						lab.DatosPuerta.Cargo = usuario != null ? usuario.Rol.ToString() : "Sin asignar";
+						lab.DatosPuerta.EstadoPuerta = "Abierto";
+						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+					});
 				}
+
+				MessageBox.Show($"Has ACEPTADO el acceso al Lab {peticion.LaboratorioID} para {usuario?.Nombre ?? "Usuario #" + peticion.UsuarioID}", "Aprobado");
 
 				ListaPeticiones.Remove(peticion);
 			}
@@ -124,7 +122,6 @@ namespace Escritorio.ViewModel
 			}
 		}
 
-		// También aplicamos [RelayCommand] aquí para generar 'DenegarPeticionCommand'
 		[RelayCommand]
 		private async void DenegarPeticion(PeticionMovil peticion)
 		{
@@ -141,20 +138,24 @@ namespace Escritorio.ViewModel
 				};
 
 				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
-
 				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
 				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonRespuesta);
 
-				MessageBox.Show($"Has DENEGADO el acceso al Lab {peticion.LaboratorioID} al Usuario {peticion.UsuarioID}.", "Rechazado");
-
+				// Limpia la card al denegar
 				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
 				if (lab != null)
 				{
-					// Borramos los datos de la Card porque no lo dejamos entrar
-					lab.DatosPuerta.UsuarioNombre = "Sin asignar";
-					lab.DatosPuerta.Cargo = "Sin asignar";
-					lab.DatosPuerta.HoraInicio = "--:--";
+					Application.Current.Dispatcher.Invoke(() =>
+					{
+						lab.DatosPuerta.UsuarioNombre = string.Empty;
+						lab.DatosPuerta.Cargo = string.Empty;
+						lab.DatosPuerta.HoraInicio = string.Empty;
+						lab.DatosPuerta.EstadoPuerta = "Cerrado";
+						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+					});
 				}
+
+				MessageBox.Show($"Has DENEGADO el acceso al Lab {peticion.LaboratorioID} al Usuario {peticion.UsuarioID}.", "Rechazado");
 
 				ListaPeticiones.Remove(peticion);
 			}
