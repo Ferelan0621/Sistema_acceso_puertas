@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace Escritorio.Data
 {
-    internal class ApiService
+    public class ApiService
     {
         // o 10.0.2.2 si usas el emulador de Android.
         private readonly HttpClient _httpClient;
@@ -143,6 +143,27 @@ namespace Escritorio.Data
             {
                 System.Diagnostics.Debug.WriteLine($"Error de conexión SSE: {ex.Message}");
                 // Aquí podrías agregar un Task.Delay y volver a llamar a la función para autoconectar
+            }
+        }
+        public async Task<List<Prestamos>> ObtenerHistorialPrestamosAsync()
+        {
+            try
+            {
+                var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                // Asegúrate de que el endpoint "Prestamos" coincida con la ruta en tu API (Controlador)
+                var respuesta = await _httpClient.GetAsync("Prestamos");
+                respuesta.EnsureSuccessStatusCode();
+
+                var contenido = await respuesta.Content.ReadAsStringAsync();
+                var elementos = JsonSerializer.Deserialize<List<Prestamos>>(contenido, opcionesJson);
+
+                return elementos ?? new List<Prestamos>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en la API cargando historial: {ex.Message}");
+                return new List<Prestamos>();
             }
         }
     }

@@ -4,17 +4,71 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Escritorio.Windows"
+        xmlns:vm="clr-namespace:Escritorio.ViewModel" 
         mc:Ignorable="d"
-        Title="PeticionesWindow" Height="450" Width="800">
-    <Grid>
-        <Button x:Name="btnHistorialpeticiones" Content="Historial de Peticiones" HorizontalAlignment="Left" Margin="621,377,0,0" VerticalAlignment="Top" Click="btnHistorialpeticiones_Click"/>
-        <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" Margin="20,26,0,0" VerticalAlignment="Top" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <ContentPresenter />
-                </ControlTemplate>
-            </Button.Template>
-            <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
-        </Button>
+        Title="Control de Accesos a Laboratorios" Height="500" Width="800"
+        WindowStartupLocation="CenterScreen">
+
+   
+
+    <Grid Background="#F5F6FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="20,20,20,10">
+            <Button x:Name="btnImagenregresar" HorizontalAlignment="Left" VerticalAlignment="Center" Click="btnImagenregresar_Click" Height="30" Width="30" Cursor="Hand" ToolTip="Regresar">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+                <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
+            </Button>
+
+            <TextBlock Text="Peticiones de Acceso Pendientes" FontSize="24" FontWeight="Bold" Foreground="#2F3640" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+
+        <ListView x:Name="lvPeticiones" ItemsSource="{Binding ListaPeticiones}" Grid.Row="1" Margin="20,10,20,10" BorderBrush="#DCDDE1" BorderThickness="1">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Usuario" DisplayMemberBinding="{Binding UsuarioID}" Width="150"/>
+                    <GridViewColumn Header="Laboratorio" DisplayMemberBinding="{Binding LaboratorioID}" Width="120"/>
+                    <GridViewColumn Header="Fecha de Solicitud" DisplayMemberBinding="{Binding FechaPrestamo}" Width="200"/>
+
+                    <GridViewColumn Header="Acciones" Width="220">
+                        <GridViewColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+									<Button Content="Aceptar" Background="#44BD32" Foreground="White" FontWeight="Bold" Margin="0,0,10,0" Padding="15,5" Cursor="Hand" BorderThickness="0"
+                Command="{Binding DataContext.AceptarPeticionCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                CommandParameter="{Binding}"/>
+
+									<Button Content="Denegar" Background="#E84118" Foreground="White" FontWeight="Bold" Padding="15,5" Cursor="Hand" BorderThickness="0"
+                Command="{Binding DataContext.DenegarPeticionCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                CommandParameter="{Binding}"/>
+								</StackPanel>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Padding" Value="5"/>
+                    <Setter Property="Margin" Value="2"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,10,20,20">
+            <Button x:Name="btnHistorialpeticiones" Content="Ver Historial de Peticiones" Background="#0097E6" Foreground="White" FontWeight="SemiBold" Padding="15,8" Cursor="Hand" BorderThickness="0" Click="btnHistorialpeticiones_Click"/>
+        </StackPanel>
+
     </Grid>
 </Window>

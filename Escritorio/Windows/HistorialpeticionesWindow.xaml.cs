@@ -21,5 +21,12 @@ namespace Escritorio.Windows
         {
             InitializeComponent();
         }
+    
+        private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
+        {
+            PeticionesWindow ventanaPeticiones = new PeticionesWindow();
+            ventanaPeticiones.Show();
+            this.Close();
+        }
     }
 }

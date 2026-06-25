@@ -1,39 +1,63 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Shared.Models
 {
-    public partial class Laboratorios: ObservableObject
-    {
-        public int ID { get; set; }
+	public partial class Laboratorios : ObservableObject
+	{
+		public int ID { get; set; }
 
-        [ObservableProperty]
-        [JsonPropertyName("direccionLora")]
+		[ObservableProperty]
+		[JsonPropertyName("direccionLora")]
+		private string _direccionLora;
 
-        private string direccionLora;
+		[ObservableProperty]
+		[JsonPropertyName("nombrelaboratorio")]
+		private string _nombreLaboratorio;
 
-        [JsonPropertyName("nombrelaboratorio")]
-        [ObservableProperty]
-        private string nombreLaboratorio;
+		[ObservableProperty]
+		[JsonPropertyName("edificio")]
+		private int _edificio;
 
-        [ObservableProperty]
-        [JsonPropertyName("edificio")]
+		[ObservableProperty]
+		[JsonPropertyName("estatus")]
+		private EstadoLaboratorio _estatus;
 
-        private int edificio;
+		[ObservableProperty]
+		[JsonPropertyName("datosPuerta")]
+		private PuertaData _datosPuerta = new PuertaData();
 
-        [JsonPropertyName("estatus")]
+		[JsonIgnore]
+		public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
 
-        [ObservableProperty]
-        private EstadoLaboratorio estatus;
+		// 🔑 FIX 1: Si la API manda null en DatosPuerta, lo protegemos
+		partial void OnDatosPuertaChanged(PuertaData oldValue, PuertaData newValue)
+		{
+			if (newValue == null)
+				DatosPuerta = new PuertaData();
+		}
 
+		// 🔑 FIX 2: Exponemos OnPropertyChanged para forzar refresco desde el ViewModel
+		public new void OnPropertyChanged(string propertyName)
+			=> base.OnPropertyChanged(propertyName);
+	}
 
-        // RELACIÓN: Un laboratorio tiene asignados muchos encargados
-        [JsonIgnore]
-        public ICollection<Prestamos> prestamos { get; set; } = new List<Prestamos>();
-        
+	public partial class PuertaData : ObservableObject
+	{
+		[ObservableProperty]
+		private string _usuarioNombre;
 
-    }
+		[ObservableProperty]
+		private string _cargo;
+
+		[ObservableProperty]
+		private string _horaInicio;
+
+		[ObservableProperty]
+		private string _horaFinal;
+
+		[ObservableProperty]
+		private string _estadoPuerta;
+	}
 }
