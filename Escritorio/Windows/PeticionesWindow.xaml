@@ -9,9 +9,7 @@
         Title="Control de Accesos a Laboratorios" Height="500" Width="800"
         WindowStartupLocation="CenterScreen">
 
-    <Window.DataContext>
-        <vm:PeticionesViewModel />
-    </Window.DataContext>
+   
 
     <Grid Background="#F5F6FA">
         <Grid.RowDefinitions>
@@ -44,18 +42,18 @@
 
                     <GridViewColumn Header="Acciones" Width="220">
                         <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Content="Aceptar" Background="#44BD32" Foreground="White" FontWeight="Bold" Margin="0,0,10,0" Padding="15,5" Cursor="Hand" BorderThickness="0"
-                                            Command="{Binding DataContext.AceptarCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                            CommandParameter="{Binding}"/>
+							<DataTemplate>
+								<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+									<Button Content="Aceptar" Background="#44BD32" Foreground="White" FontWeight="Bold" Margin="0,0,10,0" Padding="15,5" Cursor="Hand" BorderThickness="0"
+                Command="{Binding DataContext.AceptarPeticionCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                CommandParameter="{Binding}"/>
 
-                                    <Button Content="Denegar" Background="#E84118" Foreground="White" FontWeight="Bold" Padding="15,5" Cursor="Hand" BorderThickness="0"
-                                            Command="{Binding DataContext.DenegarCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                            CommandParameter="{Binding}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
+									<Button Content="Denegar" Background="#E84118" Foreground="White" FontWeight="Bold" Padding="15,5" Cursor="Hand" BorderThickness="0"
+                Command="{Binding DataContext.DenegarPeticionCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                CommandParameter="{Binding}"/>
+								</StackPanel>
+							</DataTemplate>
+						</GridViewColumn.CellTemplate>
                     </GridViewColumn>
                 </GridView>
             </ListView.View>

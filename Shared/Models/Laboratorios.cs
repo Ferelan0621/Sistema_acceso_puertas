@@ -43,7 +43,10 @@ namespace Shared.Models
 
 	public partial class PuertaData : ObservableObject
 	{
-		[ObservableProperty]
-		private string estadoPuerta;
+		[ObservableProperty] private string estadoPuerta = "Puerta_cerrada"; // Tu imagen base
+		[ObservableProperty] private string usuarioNombre = "Sin asignar";
+		[ObservableProperty] private string cargo = "---";
+		[ObservableProperty] private string horaInicio = "--:--";
+		[ObservableProperty] private string horaFinal = "--:--";
 	}
 }

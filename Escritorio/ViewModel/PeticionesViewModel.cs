@@ -2,140 +2,166 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel; // Agregado para MVVM moderno
+using CommunityToolkit.Mvvm.Input;
 using Escritorio.Data;
 using Shared.Models;
-using Shared.Services;     // ¡CRÍTICO! Agregado para acceder a MqttServices
+using Shared.Services;
+
 
 namespace Escritorio.ViewModel
 {
-    public class PeticionesViewModel
-    {
-        private EscritorioMQTT _mqttClient;
+	// 1. SOLUCIÓN AL ERROR CS0260: Se agrega 'partial' y hereda de ObservableObject
+	public partial class PeticionesViewModel : ObservableObject
+	{
+		// Usamos EXCLUSIVAMENTE el broker global de SharedData
+		private readonly EscritorioMQTT _miBroker = SharedData.Instance.Broker;
 
-        // Propiedad que el XAML va a leer en tiempo real
-        public ObservableCollection<PeticionMovil> ListaPeticiones { get; set; }
+		public ObservableCollection<Laboratorios> ListaLaboratorios => SharedData.Instance.ListaLaboratorios;
 
-        // Declaración de Comandos para los botones Aceptar y Denegar
-        public ICommand AceptarCommand { get; }
-        public ICommand DenegarCommand { get; }
+		public ObservableCollection<PeticionMovil> ListaPeticiones { get; set; }
 
-        public PeticionesViewModel()
-        {
-            ListaPeticiones = new ObservableCollection<PeticionMovil>();
+		public PeticionesViewModel()
+		{
+			ListaPeticiones = new ObservableCollection<PeticionMovil>();
+			InicializarMQTT();
+		}
 
-            // Vinculamos los comandos
-            AceptarCommand = new RelayCommand<PeticionMovil>(AceptarPeticion);
-            DenegarCommand = new RelayCommand<PeticionMovil>(DenegarPeticion);
+		private async void InicializarMQTT()
+		{
+			// 2. SOLUCIÓN ARQUITECTÓNICA: Nos colgamos del evento del Broker global, NO creamos uno nuevo.
+			_miBroker.MensajeRecibido += MqttClient_MensajeRecibido;
 
-            InicializarMQTT();
-        }
+			try
+			{
+				// Nos aseguramos de estar conectados y nos suscribimos al tópico de peticiones
+				await _miBroker.ConectarAsync();
+				string topicoSuscripcion = MqttServices.conexion;
+				await _miBroker.SuscribirseAsync(topicoSuscripcion);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error al conectar al broker MQTT: {ex.Message}");
+			}
+		}
 
-        private async void InicializarMQTT()
-        {
-            _mqttClient = new EscritorioMQTT();
-            _mqttClient.MensajeRecibido += MqttClient_MensajeRecibido;
+		private void MqttClient_MensajeRecibido(string topic, string payload)
+		{
+			Application.Current.Dispatcher.Invoke(() =>
+			{
+				try
+				{
+					// Solo procesamos si el mensaje viene del tópico de conexión móvil
+					if (topic == MqttServices.conexion)
+					{
+						var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+						var nuevaPeticion = JsonSerializer.Deserialize<PeticionMovil>(payload, opcionesJson);
 
-            try
-            {
-                await _mqttClient.ConectarAsync();
+						if (nuevaPeticion != null)
+						{
+							ListaPeticiones.Add(nuevaPeticion);
 
-                // Ahora el escritorio escucha exactamente donde el móvil publica
-                string topicoSuscripcion = MqttServices.conexion;
-                await _mqttClient.SuscribirseAsync(topicoSuscripcion);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al conectar al broker MQTT: {ex.Message}");
-            }
-        }
+							// Buscamos la tarjeta del lab
+							var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == nuevaPeticion.LaboratorioID);
+							if (lab != null)
+							{
+								// Llenamos los campos visuales de tu Card con los datos del móvil
+								// Usamos el operador ?? por si el móvil no manda Nombre o Cargo, que no se quede en blanco
+								lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(nuevaPeticion.NombreUsuario) ? nuevaPeticion.NombreUsuario : $"ID: {nuevaPeticion.UsuarioID}";
+								lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(nuevaPeticion.Cargo) ? nuevaPeticion.Cargo : "Pendiente...";
+								lab.DatosPuerta.HoraInicio = nuevaPeticion.FechaPrestamo;
+							}
+						}
 
-        private void MqttClient_MensajeRecibido(string topic, string payload)
-        {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                try
-                {
-                    var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var nuevaPeticion = JsonSerializer.Deserialize<PeticionMovil>(payload, opcionesJson);
+					}
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"Error al procesar JSON: {ex.Message}");
+				}
+			});
+		}
 
-                    if (nuevaPeticion != null)
-                    {
-                        ListaPeticiones.Add(nuevaPeticion);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error al procesar JSON: {ex.Message}");
-                }
-            });
-        }
+		// 3. USO CORRECTO DE TOOLKIT: [RelayCommand] genera automáticamente 'AceptarPeticionCommand'
+		[RelayCommand]
+		private async void AceptarPeticion(PeticionMovil peticion)
+		{
+			if (peticion == null) return;
 
-        // Se cambia a async void para poder usar el await al publicar
-        private async void AceptarPeticion(PeticionMovil peticion)
-        {
-            if (peticion == null) return;
+			try
+			{
+				var respuestaPayload = new
+				{
+					estatus = "aceptado",
+					usuarioID = peticion.UsuarioID,
+					laboratorioID = peticion.LaboratorioID,
+					mensaje = $"Acceso concedido al Laboratorio {peticion.LaboratorioID}."
+				};
 
-            try
-            {
-                // 1. Avisamos al móvil que fue aceptado publicando en su tópico de escucha
-                string mensajeRespuesta = $"Aceptado: Acceso concedido al Laboratorio {peticion.LaboratorioID}.";
-                await _mqttClient.PublicarMensajeAsync(MqttServices.respuesta, mensajeRespuesta);
+				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
 
-                // 2. Lógica local en el escritorio (puedes meter aquí tu ApiService)
-                MessageBox.Show($"Has ACEPTADO el acceso al Lab {peticion.LaboratorioID} para el usuario {peticion.UsuarioID}", "Aprobado");
+				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
+				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonRespuesta);
 
-                // 3. Quitamos de la lista
-                ListaPeticiones.Remove(peticion);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
-            }
-        }
+				string jsonAbrir = JsonSerializer.Serialize(new { d = peticion.LaboratorioID.ToString(), c = "abrir" });
+				await _miBroker.PublicarMensajeAsync(MqttServices.abrir, jsonAbrir);
 
-        // Se cambia a async void para poder usar el await al publicar
-        private async void DenegarPeticion(PeticionMovil peticion)
-        {
-            if (peticion == null) return;
+				MessageBox.Show($"Has ACEPTADO el acceso al Lab {peticion.LaboratorioID} para el usuario {peticion.UsuarioID}", "Aprobado");
 
-            try
-            {
-                // 1. Avisamos al móvil que fue rechazado
-                string mensajeRespuesta = $"Denegado: No se autorizó el acceso al Laboratorio {peticion.LaboratorioID}.";
-                await _mqttClient.PublicarMensajeAsync(MqttServices.respuesta, mensajeRespuesta);
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
+				if (lab != null)
+				{
+					// Mantenemos el nombre y la hora de inicio, pero confirmamos el cargo/estado
+					lab.DatosPuerta.Cargo = "Aprobado / Adentro";
+					lab.DatosPuerta.EstadoPuerta = "Abierto"; // Esto debería cambiar el ícono de tu puerta si lo tienes configurado
+				}
 
-                // 2. Lógica local
-                MessageBox.Show($"Has DENEGADO el acceso al Lab {peticion.LaboratorioID}.", "Rechazado");
+				ListaPeticiones.Remove(peticion);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
+			}
+		}
 
-                // 3. Quitamos de la lista
-                ListaPeticiones.Remove(peticion);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
-            }
-        }
-    }
+		// También aplicamos [RelayCommand] aquí para generar 'DenegarPeticionCommand'
+		[RelayCommand]
+		private async void DenegarPeticion(PeticionMovil peticion)
+		{
+			if (peticion == null) return;
 
-    // --- CLASE AUXILIAR PARA MVVM (Sin cambios, se queda igual) ---
-    public class RelayCommand<T> : ICommand
-    {
-        private readonly Action<T> _execute;
-        private readonly Predicate<T> _canExecute;
+			try
+			{
+				var respuestaPayload = new
+				{
+					estatus = "denegado",
+					usuarioID = peticion.UsuarioID,
+					laboratorioID = peticion.LaboratorioID,
+					mensaje = $"No se autorizó tu acceso al Laboratorio {peticion.LaboratorioID}."
+				};
 
-        public RelayCommand(Action<T> execute, Predicate<T> canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
+				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
 
-        public bool CanExecute(object parameter) => _canExecute == null || _canExecute((T)parameter);
-        public void Execute(object parameter) => _execute((T)parameter);
-        public event EventHandler CanExecuteChanged
-        {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
-    }
+				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
+				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonRespuesta);
+
+				MessageBox.Show($"Has DENEGADO el acceso al Lab {peticion.LaboratorioID} al Usuario {peticion.UsuarioID}.", "Rechazado");
+
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
+				if (lab != null)
+				{
+					// Borramos los datos de la Card porque no lo dejamos entrar
+					lab.DatosPuerta.UsuarioNombre = "Sin asignar";
+					lab.DatosPuerta.Cargo = "Sin asignar";
+					lab.DatosPuerta.HoraInicio = "--:--";
+				}
+
+				ListaPeticiones.Remove(peticion);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
+			}
+		}
+	}
 }

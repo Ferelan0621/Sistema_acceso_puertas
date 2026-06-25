@@ -11,168 +11,115 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Threading;
+using Escritorio.Data;
 
 namespace Escritorio.Mvvm
 {
-    public partial class LaboratorioViewModel : ObservableObject
-    {
-        private readonly ApiService _apiService = new ApiService();
-        private readonly EscritorioMQTT _miBroker;
-        private CancellationTokenSource _sseCancellationTokenSource;
+	public partial class LaboratorioViewModel : ObservableObject
+	{
+		private readonly ApiService _apiService = new ApiService();
+		private readonly EscritorioMQTT _miBroker; // Usaremos este nombre único
+		private CancellationTokenSource _sseCancellationTokenSource;
 
-        // Esta lista avisa a la UI cuando se agregan o quitan elementos
-        [ObservableProperty]
-        private ObservableCollection<Laboratorios> _listaLaboratorios = new();
 
-        // Controlamos el texto y el color del foquito desde aquí
-        [ObservableProperty]
-        private string _statusMensaje = "Esperando conexión...";
+		[ObservableProperty]
+		private ObservableCollection<Laboratorios> _listaLaboratorios = new();
 
-        [ObservableProperty]
-        private SolidColorBrush _statusColor = new SolidColorBrush(Colors.Gray);
+		[ObservableProperty]
+		private string _statusMensaje = "Esperando conexión...";
 
-        public LaboratorioViewModel()
-        {
-            _miBroker = new EscritorioMQTT();
-            _miBroker.MensajeRecibido += MensajeRecibido;
+		[ObservableProperty]
+		private SolidColorBrush _statusColor = new SolidColorBrush(Colors.Gray);
 
-            // Disparamos la carga asíncrona sin bloquear el constructor
-            _ = CargarDatosYConectarAsync();
-        }
+		public LaboratorioViewModel()
+		{
+			_miBroker = new EscritorioMQTT();
+			// Un solo manejador para todo
+			_miBroker.MensajeRecibido += ProcesarMensajeRecibido;
 
-        private async Task CargarDatosYConectarAsync()
-        {
-            try
-            {
-                StatusMensaje = "Consultando BD...";
-                var labs = await _apiService.ObtenerLaboratoriosAsync();
+			_ = CargarDatosYConectarAsync();
+		}
 
-                if (labs != null)
-                {
-                    ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
-                }
+		private async Task CargarDatosYConectarAsync()
+		{
+			try
+			{
+				StatusMensaje = "Consultando BD...";
+				var labs = await _apiService.ObtenerLaboratoriosAsync();
+				if (labs != null) ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
 
-                StatusMensaje = "Conectando al ESP32 por MQTT...";
+				await _miBroker.ConectarAsync();
 
-                await _miBroker.ConectarAsync();
+				// Suscripciones
+				await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
+				await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
+				await _miBroker.SuscribirseAsync("peticion/movil/conexion"); // Ajusta este tópico si es otro
 
-                // 1. Suscripción al estatus general
-                await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
+				StatusColor = new SolidColorBrush(Colors.Green);
+				StatusMensaje = "MQTT Conectado";
+			}
+			catch (Exception ex)
+			{
+				StatusColor = new SolidColorBrush(Colors.Red);
+				StatusMensaje = "Error de conexión";
+			}
+		}
 
-                // 2. ADAPTACIÓN CLAVE: Le agregamos el comodín "/#" al doorTopic
-                // Esto le dice a tu app: "Escucha todo lo que empiece con UPT/LABORATORIOS/doorStatus/"
-                await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
+		// UN SOLO PUNTO DE ENTRADA PARA MENSAJES MQTT
+		private void ProcesarMensajeRecibido(string topic, string payload)
+		{
+			if (string.IsNullOrEmpty(payload)) return;
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    StatusColor = new SolidColorBrush(Colors.Green);
-                    StatusMensaje = "MQTT Conectado al ESP32";
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error en la inicialización: {ex.Message}");
-                StatusColor = new SolidColorBrush(Colors.Red);
-                StatusMensaje = "Error de conexión MQTT";
-            }
-        }
+			// 1. Manejo de Status del Gateway
+			if (topic == MqttServices.statusTopic)
+			{
+				Application.Current.Dispatcher.Invoke(() => {
+					bool online = payload.ToLower().Contains("online");
+					StatusColor = new SolidColorBrush(online ? Colors.Green : Colors.Red);
+					StatusMensaje = online ? "MQTT Conectado" : "MQTT Desconectado";
+				});
+			}
+			// 2. Manejo de Sensores de Puerta
+			else if (topic.StartsWith(MqttServices.doorTopic))
+			{
+				string idLabMqtt = topic.Split('/').Last(); // Obtiene el ID del final del tópico
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.DireccionLora == idLabMqtt);
 
-        private void ProcesarEventoPuerta(SensorPuerta evento)
-        {
-            if (evento == null || string.IsNullOrEmpty(evento.SensorMqtt)) return;
+				if (lab != null)
+				{
+					Application.Current.Dispatcher.Invoke(() => {
+						bool abierta = payload.Contains("open") || payload.Contains("1") || payload.Contains("true");
+						lab.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
+					});
+				}
+			}
+			// 3. Manejo de Peticiones del Móvil (NUEVO DATO)
+			else if (topic == "peticion/movil/conexion")
+			{
+				var datos = JsonSerializer.Deserialize<PeticionMovil>(payload);
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
 
-            bool abierta = evento.Estado.ToLower().Contains("abierta") ||
-                           evento.Estado.Contains("true") ||
-                           evento.Estado.Contains("1") ||
-                           evento.Estado.Contains("open");
+				if (lab != null)
+				{
+					Application.Current.Dispatcher.Invoke(() => {
+						// OPCIÓN DE PRUEBA: Si no llegan los datos, pon algo fijo para verificar
+						lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(datos.NombreUsuario) ? datos.NombreUsuario : "Usuario #" + datos.UsuarioID;
+						lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(datos.Cargo) ? datos.Cargo : "Sin asignar";
+						lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
+						lab.DatosPuerta.EstadoPuerta = "Abierto";
+					});
+				}
+			}
+		}
 
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                var laboratorio = ListaLaboratorios.FirstOrDefault(l =>
-                    l.DireccionLora != null &&
-                    l.DireccionLora.Equals(evento.SensorMqtt, StringComparison.OrdinalIgnoreCase));
+		[RelayCommand]
+		private async Task AbrirLabAsync(Laboratorios labSeleccionado)
+		{
+			if (labSeleccionado == null) return;
+			string json = JsonSerializer.Serialize(new { d = labSeleccionado.ID.ToString(), c = "abrir" });
+			await _miBroker.PublicarMensajeAsync(MqttServices.abrir, json);
+		}
 
-                if (laboratorio != null)
-                {
-                    // OJO AQUÍ: Ahora actualizamos la propiedad interna "DatosPuerta"
-                    laboratorio.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
-                }
-            });
-        }
-
-        private void MensajeRecibido(string topic, string payload)
-        {
-            if (string.IsNullOrEmpty(payload)) return;
-
-            // Estatus del Gateway
-            if (topic == MqttServices.statusTopic)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    bool online = payload.ToLower().Contains("online");
-                    StatusColor = new SolidColorBrush(online ? Colors.Green : Colors.Red);
-                    StatusMensaje = online ? "MQTT Conectado" : "MQTT Desconectado";
-                });
-                return;
-            }
-
-            // 3. ADAPTACIÓN DEL TOPICO DE LA PUERTA
-            if (topic.StartsWith(MqttServices.doorTopic))
-            {
-                // Dividimos el tópico por las diagonales '/'
-                // Ejemplo: "UPT/LABORATORIOS/doorStatus/LAB01" se convierte en un arreglo de 4 partes.
-                string[] parts = topic.Split('/');
-
-                // Verificamos que tenga la parte extra (el ID del laboratorio)
-                if (parts.Length > 3)
-                {
-                    // parts[3] contendría "LAB01"
-                    string idLabMqtt = parts[3];
-
-                    // Verificamos si el mensaje indica que se abrió
-                    bool abierta = payload.ToLower().Contains("abierta") ||
-                                   payload.Contains("true") ||
-                                   payload.Contains("1") ||
-                                   payload.Contains("open");
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        // Buscamos en nuestra lista el laboratorio que coincida con el ID que mandó el ESP32
-                        // Nota: Asegúrate de que DireccionLora (o la propiedad que uses) coincida con el identificador del ESP32
-                        var laboratorio = ListaLaboratorios.FirstOrDefault(l =>
-                            l.DireccionLora != null &&
-                            l.DireccionLora.Equals(idLabMqtt, StringComparison.OrdinalIgnoreCase));
-
-                        if (laboratorio != null)
-                        {
-                            // Actualizamos la interfaz gráfica al instante
-                            laboratorio.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
-                        }
-                    });
-                }
-            }
-        }
-
-        // Este Comando reemplaza al viejo evento btnAbrirLab_Click
-        [RelayCommand]
-        private async Task AbrirLabAsync(Laboratorios labSeleccionado)
-        {
-            if (labSeleccionado == null) return;
-
-            try
-            {
-                string json = JsonSerializer.Serialize(new { d = labSeleccionado.ID.ToString(), c = "abrir" });
-                await _miBroker.PublicarMensajeAsync(MqttServices.abrir, json);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error enviando comando: " + ex.Message);
-            }
-        }
-        // Llama a este método desde el evento "Closed" de tu ventana o cuando el usuario regrese al inicio
-        public void DesconectarSSE()
-        {
-            _sseCancellationTokenSource?.Cancel();
-        }
-    }
+		public void DesconectarSSE() => _sseCancellationTokenSource?.Cancel();
+	}
 }

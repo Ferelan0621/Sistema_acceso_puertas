@@ -17,5 +17,8 @@ namespace Shared.Models
 
 		[JsonPropertyName("fechaPrestamo")]
 		public string FechaPrestamo { get; set; }
+
+		public string NombreUsuario { get; set; }
+		public string Cargo { get; set; }
 	}
 }
