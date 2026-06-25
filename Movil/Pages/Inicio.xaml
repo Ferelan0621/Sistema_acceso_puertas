@@ -5,11 +5,12 @@
              xmlns:converters="clr-namespace:Movil.Converters"
              xmlns:viewmodels="clr-namespace:Movil.ViewModels"
              x:DataType="viewmodels:InicioViewModel"
-             x:Class="Movil.Pages.Inicio">
-
+             x:Class="Movil.Pages.Inicio"
+             x:Name="paginaInicio">
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters:EstadoToColorConverterBase x:Key="ColorEstado" />
+            <converters:LabAceptadoMultiConverter x:Key="ColorAceptado" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -19,6 +20,7 @@
                Text="{Binding Titulo}" 
                FontSize="22" 
                FontAttributes="Bold" />
+        <Label Text="{Binding username}"/>
 
         <CollectionView Grid.Row="1"
                         x:Name="gridLaboratorios"
@@ -36,11 +38,18 @@
                 <DataTemplate x:DataType="local:Laboratorios">
                     <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
 
+                        <Border.BackgroundColor>
+                            <MultiBinding Converter="{StaticResource ColorAceptado}">
+                                <Binding Path="ID" />
+                                <Binding Path="BindingContext.LaboratorioAceptadoId" Source="{x:Reference paginaInicio}" />
+                                <Binding Path="Estatus" />
+                            </MultiBinding>
+                        </Border.BackgroundColor>
+
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup Name="CommonStates">
                                 <VisualState Name="Normal">
                                     <VisualState.Setters>
-                                        <Setter Property="BackgroundColor" Value="{Binding Estatus, Converter={StaticResource ColorEstado}}" />
                                         <Setter Property="Stroke" Value="#D1D1D1" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -70,6 +79,7 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <Label Text="{ Binding ResultadoJson}"/>
+
+        <Label VerticalOptions="End" Text="{Binding ResultadoJson}" IsVisible="False" />
     </Grid>
 </ContentPage>

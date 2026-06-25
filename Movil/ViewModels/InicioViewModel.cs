@@ -10,18 +10,13 @@ using System.Text.Json;
 
 namespace Movil.ViewModels;
 
-// Vinculamos la propiedad de navegación directamente al ViewModel
 [QueryProperty(nameof(LaboratorioActual), "LaboratorioClave")]
 public partial class InicioViewModel : ObservableObject
 {
-
     private CancellationTokenSource _sseCts;
-
     private readonly ApiService _apiService = new ApiService();
     private readonly ConexionMqtt _miBroker;
-    private readonly int _userId;
 
-    // Propiedades observables automáticas gracias al Toolkit
     [ObservableProperty]
     private ObservableCollection<Laboratorios> _laboratorios = new();
 
@@ -37,16 +32,27 @@ public partial class InicioViewModel : ObservableObject
     [ObservableProperty]
     private Laboratorios _laboratorioSeleccionado;
 
+    // Propiedad clave para saber cuál nos aceptaron (-1 significa ninguno)
+    [ObservableProperty]
+    private int _laboratorioAceptadoId = -1;
+
+    // Clase interna para desarmar el JSON de MQTT
+    private class RespuestaMqtt
+    {
+        public string estatus { get; set; }
+        public int usuarioID { get; set; }
+        public int laboratorioID { get; set; }
+        public string mensaje { get; set; }
+    }
+
     public InicioViewModel()
     {
         _miBroker = new ConexionMqtt();
-        _userId = Preferences.Default.Get("usuarioID", 0);
-
-        // Inicializamos la conexión MQTT en segundo plano sin bloquear el constructor
         _ = IniciarComunicacionMqtt();
     }
-    
 
+    private int userId => Preferences.Default.Get("usuarioID", 0);
+    public string username => Preferences.Default.Get("Nombre", "usuariodef");
 
     public void IniciarEscuchaSSE()
     {
@@ -57,6 +63,12 @@ public partial class InicioViewModel : ObservableObject
         );
     }
 
+    [RelayCommand]
+    public void LiberarLaboratorio()
+    {
+        LaboratorioAceptadoId = -1;
+        _ = CargarLaboratoriosAsync();
+    }
     public void DetenerEscuchaSSE()
     {
         _sseCts?.Cancel();
@@ -65,10 +77,20 @@ public partial class InicioViewModel : ObservableObject
 
     private void ActualizarListaUI(List<Laboratorios> nuevosDatos)
     {
-        // Limpiamos y repoblamos la misma instancia de la colección.
-        // Esto mantiene vivo el binding de tu vista.
         Laboratorios.Clear();
 
+        // 1. Si ya tenemos un laboratorio aceptado, lo ponemos HASTA ARRIBA
+        if (LaboratorioAceptadoId != -1)
+        {
+            var labAceptado = nuevosDatos.FirstOrDefault(l => l.ID == LaboratorioAceptadoId);
+            if (labAceptado != null)
+            {
+                Laboratorios.Add(labAceptado);
+                nuevosDatos.Remove(labAceptado); // Lo quitamos de la lista para no duplicarlo
+            }
+        }
+
+        // 2. Agregamos el resto abajo
         foreach (var lab in nuevosDatos)
         {
             Laboratorios.Add(lab);
@@ -77,8 +99,6 @@ public partial class InicioViewModel : ObservableObject
         Titulo = "Selecciona un Lab";
     }
 
-
-    // Asegúrate de actualizar tu método CargarLaboratoriosAsync para usar el nuevo estado
     [RelayCommand]
     private async Task CargarLaboratoriosAsync()
     {
@@ -87,8 +107,7 @@ public partial class InicioViewModel : ObservableObject
             var listaLabs = await _apiService.ObtenerLaboratoriosAsync();
             if (listaLabs != null)
             {
-                Laboratorios = new ObservableCollection<Laboratorios>(listaLabs);
-                Titulo = "Selecciona un Lab";
+                ActualizarListaUI(listaLabs); // Reutilizamos la lógica de ordenar
             }
         }
         catch (Exception ex)
@@ -106,7 +125,6 @@ public partial class InicioViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            // Shell.Current.DisplayAlert devuelve true si presionan el primer botón ("Intentar de nuevo")
             bool reintentar = await Shell.Current.DisplayAlert(
                 "Error de Conexión",
                 $"Error al inicializar la conexión MQTT: {ex.Message}",
@@ -125,9 +143,46 @@ public partial class InicioViewModel : ObservableObject
     {
         if (labSeleccionado == null) return;
 
-        // Limpiamos la selección para evitar bloqueos visuales
+        // Limpiamos la selección visual
         LaboratorioSeleccionado = null;
 
+        // CASO A: YA TENEMOS UN LABORATORIO ACEPTADO
+        if (LaboratorioAceptadoId != -1)
+        {
+            if (labSeleccionado.ID != LaboratorioAceptadoId)
+            {
+                // Le dio clic a otro (están inhabilitados)
+                await Shell.Current.DisplayAlertAsync("Aviso", "Ya tienes un laboratorio en uso. Los demás están inhabilitados.", "OK");
+                return;
+            }
+            else 
+            {
+                string fechaCierre = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
+
+                // Le dio clic de nuevo al laboratorio aceptado (MANDAR COMANDO SECUNDARIO)
+                var payloadSecundario = new
+                {
+                    UsuarioID = userId,
+                    LaboratorioID = labSeleccionado.ID,
+                    fechaCierreRemoto = fechaCierre // Cámbialo por lo que tu API necesite
+                };
+
+                string jsonSecundario = JsonSerializer.Serialize(payloadSecundario, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+                try
+                {
+                    await _miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonSecundario);
+                    await Shell.Current.DisplayAlert("Comando Enviado", "Se envió la petición extra al laboratorio.", "OK");
+                }
+                catch (Exception ex)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Fallo al enviar: {ex.Message}", "OK");
+                }
+                return; // Cortamos ejecución aquí
+            }
+        }
+
+        // CASO B: FLUJO NORMAL (Pedir préstamo de uno nuevo)
         if (labSeleccionado.Estatus != EstadoLaboratorio.Disponible)
         {
             await Shell.Current.DisplayAlertAsync("Aviso", $"El Laboratorio {labSeleccionado.NombreLaboratorio} no esta disponible.", "OK");
@@ -135,10 +190,9 @@ public partial class InicioViewModel : ObservableObject
         }
 
         string fechaSolicitud = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
-
         var payloadSolicitud = new
         {
-            UsuarioID = _userId,
+            UsuarioID = userId,
             LaboratorioID = labSeleccionado.ID,
             FechaPrestamo = fechaSolicitud
         };
@@ -154,34 +208,30 @@ public partial class InicioViewModel : ObservableObject
 
         if (_miBroker == null)
         {
-            await Shell.Current.DisplayAlert("Elemento Faltante", "Falta inicializar el cliente MQTT. No se puede enviar la petición.", "OK");
+            await Shell.Current.DisplayAlert("Elemento Faltante", "Falta inicializar el cliente MQTT.", "OK");
             return;
         }
 
         try
         {
             await _miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
-            await Shell.Current.DisplayAlert("Éxito", "La petici" +
-                "ón de apertura se envió correctamente.", "OK");
+            await Shell.Current.DisplayAlert("Éxito", "La petición de apertura se envió correctamente.", "OK");
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error de Envío", $"Falta conexión o hubo un error al enviar el mensaje: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlert("Error de Envío", $"Error al enviar el mensaje: {ex.Message}", "OK");
         }
     }
-    
+
     private async Task IniciarComunicacionMqtt()
     {
+        if (userId == 0) return;
+
         try
         {
-            // 1. Nos suscribimos al evento que creaste en EscritorioMQTT.cs
             _miBroker.MensajeRecibido += AlRecibirMensajeMqtt;
-
-            // 2. Nos conectamos al broker
             await _miBroker.ConectarAsync();
-
-            // 3. Nos suscribimos al tópico específico del móvil (el que estaba en azul)
-            await _miBroker.SuscribirseAsync(MqttServices.respuesta);
+            await _miBroker.SuscribirseAsync($"{MqttServices.respuesta}/{userId}");
         }
         catch (Exception ex)
         {
@@ -189,17 +239,70 @@ public partial class InicioViewModel : ObservableObject
         }
     }
 
-    // Este método se dispara gracias al "MensajeRecibido?.Invoke(topic, payload);" de tu clase
+
+
     private void AlRecibirMensajeMqtt(string topic, string payload)
     {
-        if (topic == MqttServices.respuesta)
+        if (topic == $"{MqttServices.respuesta}/{userId}")
         {
-            // AHORA SÍ pasamos al hilo principal
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
-                // Aquí ya puedes actualizar tu Canvas tranquilamente
+                try
+                {
+                    // Convertimos el JSON de respuesta
+                    var respuesta = JsonSerializer.Deserialize<RespuestaMqtt>(payload, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (respuesta != null && respuesta.estatus.Equals("aceptado", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // NOS ACEPTARON
+                        LaboratorioAceptadoId = respuesta.laboratorioID;
+
+                        // Lo subimos al primer lugar de la lista visualmente
+                        var labAceptado = Laboratorios.FirstOrDefault(l => l.ID == LaboratorioAceptadoId);
+                        if (labAceptado != null)
+                        {
+                            Laboratorios.Remove(labAceptado);
+                            Laboratorios.Insert(0, labAceptado);
+                        }
+
+                        await Shell.Current.DisplayAlert("¡Acceso Concedido!", respuesta.mensaje, "OK");
+                    }
+                    else if (respuesta != null && respuesta.estatus.Equals("denegado", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // NOS DENEGARON
+                        LaboratorioAceptadoId = -1;
+                        await Shell.Current.DisplayAlert("Acceso Denegado", respuesta.mensaje, "OK");
+                    }
+                    else if (respuesta != null && respuesta.estatus.Equals("cerrado", StringComparison.OrdinalIgnoreCase))
+                {
+                        await Shell.Current.DisplayAlert("Laboratorio Cerrado", respuesta.mensaje, "OK");
+                        LiberarLaboratorio();
+                        
+                }
+                    else
+                    {
+                        // Cualquier otra cosa
+                        await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
+                    }
+                }
+                catch
+                {
+                    // Si no es un JSON válido, lo muestra en texto plano
+                    await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
+                }
             });
         }
+    }
+
+    public void LimpiarRecursos()
+    {
+        if (_miBroker != null)
+        {
+            _miBroker.MensajeRecibido -= AlRecibirMensajeMqtt;
+        }
+
+        Laboratorios?.Clear();
+        ResultadoJson = string.Empty;
+        LaboratorioSeleccionado = null;
     }
 }

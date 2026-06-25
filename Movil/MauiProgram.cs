@@ -22,6 +22,8 @@ namespace Movil
     		builder.Logging.AddDebug();
 #endif
             builder.Services.AddTransient<IniciarSesion>();
+            builder.Services.AddTransient<ViewModels.PrestamosViewModel>();
+
             return builder.Build();
         }
     }

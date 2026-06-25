@@ -41,6 +41,7 @@
                                 <Label Text="Estado:" FontSize="12" TextColor="Gray" />
                                 <Label Text="{Binding FechaApertura, StringFormat='Apertura: {0:HH:mm}'}" 
                                        FontSize="12" TextColor="Green" FontAttributes="Bold"/>
+                                <Label Text="{Binding UsuarioID}"/>
                             </HorizontalStackLayout>
 
                         </Grid>

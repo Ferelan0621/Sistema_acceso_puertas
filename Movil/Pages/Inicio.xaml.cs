@@ -10,7 +10,6 @@ public partial class Inicio : ContentPage
     {
         InitializeComponent();
 
-        // Asignamos el ViewModel
         _viewModel = new InicioViewModel();
         BindingContext = _viewModel;
     }
@@ -19,13 +18,11 @@ public partial class Inicio : ContentPage
     {
         base.OnAppearing();
 
-        // 1. Cargamos la lista inicial
         if (_viewModel.CargarLaboratoriosCommand.CanExecute(null))
         {
             _viewModel.CargarLaboratoriosCommand.Execute(null);
         }
 
-        // 2. Iniciamos la conexión SSE para recibir actualizaciones en tiempo real
         _viewModel.IniciarEscuchaSSE();
     }
 
@@ -33,7 +30,7 @@ public partial class Inicio : ContentPage
     {
         base.OnDisappearing();
 
-        // 3. ¡IMPORTANTE! Cerramos la conexión SSE al salir para liberar recursos
         _viewModel.DetenerEscuchaSSE();
+        _viewModel.LimpiarRecursos();
     }
 }

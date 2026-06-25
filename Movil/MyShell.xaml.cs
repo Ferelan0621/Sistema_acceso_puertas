@@ -8,7 +8,6 @@ public partial class MyShell : Shell
 	{
 		InitializeComponent();
 
-        Routing.RegisterRoute("Registro", typeof(Registro));
         Routing.RegisterRoute("Password", typeof(Password));
 
 
