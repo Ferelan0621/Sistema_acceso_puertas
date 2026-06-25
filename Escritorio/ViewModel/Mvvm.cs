@@ -11,16 +11,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Threading;
-using Escritorio.Data;
 
 namespace Escritorio.Mvvm
 {
 	public partial class LaboratorioViewModel : ObservableObject
 	{
 		private readonly ApiService _apiService = new ApiService();
-		private readonly EscritorioMQTT _miBroker; // Usaremos este nombre único
+		private readonly EscritorioMQTT _miBroker;
 		private CancellationTokenSource _sseCancellationTokenSource;
-
 
 		[ObservableProperty]
 		private ObservableCollection<Laboratorios> _listaLaboratorios = new();
@@ -34,7 +32,6 @@ namespace Escritorio.Mvvm
 		public LaboratorioViewModel()
 		{
 			_miBroker = new EscritorioMQTT();
-			// Un solo manejador para todo
 			_miBroker.MensajeRecibido += ProcesarMensajeRecibido;
 
 			_ = CargarDatosYConectarAsync();
@@ -46,14 +43,23 @@ namespace Escritorio.Mvvm
 			{
 				StatusMensaje = "Consultando BD...";
 				var labs = await _apiService.ObtenerLaboratoriosAsync();
-				if (labs != null) ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
+
+				if (labs != null)
+				{
+					// 🔑 FIX 3: Aseguramos que cada lab tenga DatosPuerta inicializado
+					foreach (var lab in labs)
+					{
+						if (lab.DatosPuerta == null)
+							lab.DatosPuerta = new PuertaData();
+					}
+					ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
+				}
 
 				await _miBroker.ConectarAsync();
 
-				// Suscripciones
 				await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
 				await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
-				await _miBroker.SuscribirseAsync("peticion/movil/conexion"); // Ajusta este tópico si es otro
+				await _miBroker.SuscribirseAsync("peticion/movil/conexion");
 
 				StatusColor = new SolidColorBrush(Colors.Green);
 				StatusMensaje = "MQTT Conectado";
@@ -61,53 +67,78 @@ namespace Escritorio.Mvvm
 			catch (Exception ex)
 			{
 				StatusColor = new SolidColorBrush(Colors.Red);
-				StatusMensaje = "Error de conexión";
+				StatusMensaje = $"Error de conexión: {ex.Message}";
 			}
 		}
 
-		// UN SOLO PUNTO DE ENTRADA PARA MENSAJES MQTT
 		private void ProcesarMensajeRecibido(string topic, string payload)
 		{
 			if (string.IsNullOrEmpty(payload)) return;
 
-			// 1. Manejo de Status del Gateway
+			// 1. Status del Gateway
 			if (topic == MqttServices.statusTopic)
 			{
-				Application.Current.Dispatcher.Invoke(() => {
+				Application.Current.Dispatcher.Invoke(() =>
+				{
 					bool online = payload.ToLower().Contains("online");
 					StatusColor = new SolidColorBrush(online ? Colors.Green : Colors.Red);
 					StatusMensaje = online ? "MQTT Conectado" : "MQTT Desconectado";
 				});
 			}
-			// 2. Manejo de Sensores de Puerta
+			// 2. Sensores de Puerta
 			else if (topic.StartsWith(MqttServices.doorTopic))
 			{
-				string idLabMqtt = topic.Split('/').Last(); // Obtiene el ID del final del tópico
+				string idLabMqtt = topic.Split('/').Last();
 				var lab = ListaLaboratorios.FirstOrDefault(l => l.DireccionLora == idLabMqtt);
 
 				if (lab != null)
 				{
-					Application.Current.Dispatcher.Invoke(() => {
+					Application.Current.Dispatcher.Invoke(() =>
+					{
 						bool abierta = payload.Contains("open") || payload.Contains("1") || payload.Contains("true");
 						lab.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
+
+						// 🔑 FIX 4: Fuerza refresco del binding anidado
+						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
 					});
 				}
 			}
-			// 3. Manejo de Peticiones del Móvil (NUEVO DATO)
+			// 3. Peticiones del Móvil
 			else if (topic == "peticion/movil/conexion")
 			{
-				var datos = JsonSerializer.Deserialize<PeticionMovil>(payload);
-				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
-
-				if (lab != null)
+				try
 				{
-					Application.Current.Dispatcher.Invoke(() => {
-						// OPCIÓN DE PRUEBA: Si no llegan los datos, pon algo fijo para verificar
-						lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(datos.NombreUsuario) ? datos.NombreUsuario : "Usuario #" + datos.UsuarioID;
-						lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(datos.Cargo) ? datos.Cargo : "Sin asignar";
-						lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
-						lab.DatosPuerta.EstadoPuerta = "Abierto";
-					});
+					var datos = JsonSerializer.Deserialize<PeticionMovil>(payload);
+					if (datos == null) return;
+
+					var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
+
+					if (lab != null)
+					{
+						Application.Current.Dispatcher.Invoke(() =>
+						{
+							// Actualiza las propiedades internas de DatosPuerta
+							lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(datos.NombreUsuario)
+								? datos.NombreUsuario
+								: "Usuario #" + datos.UsuarioID;
+
+							lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(datos.Cargo)
+								? datos.Cargo
+								: "Sin asignar";
+
+							lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
+							lab.DatosPuerta.EstadoPuerta = "Abierto";
+
+							// 🔑 FIX 5: Fuerza que la card entera refresque DatosPuerta
+							lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+						});
+					}
+				}
+				catch (JsonException ex)
+				{
+					// Log del error para debugging
+					System.Diagnostics.Debug.WriteLine($"[MQTT] Error deserializando peticion: {ex.Message}");
+					System.Diagnostics.Debug.WriteLine($"[MQTT] Payload recibido: {payload}");
 				}
 			}
 		}
