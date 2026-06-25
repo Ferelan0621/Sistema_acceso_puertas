@@ -63,6 +63,12 @@ public partial class InicioViewModel : ObservableObject
         );
     }
 
+    [RelayCommand]
+    public void LiberarLaboratorio()
+    {
+        LaboratorioAceptadoId = -1;
+        _ = CargarLaboratoriosAsync();
+    }
     public void DetenerEscuchaSSE()
     {
         _sseCts?.Cancel();
@@ -149,14 +155,16 @@ public partial class InicioViewModel : ObservableObject
                 await Shell.Current.DisplayAlertAsync("Aviso", "Ya tienes un laboratorio en uso. Los demás están inhabilitados.", "OK");
                 return;
             }
-            else
+            else 
             {
+                string fechaCierre = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
+
                 // Le dio clic de nuevo al laboratorio aceptado (MANDAR COMANDO SECUNDARIO)
                 var payloadSecundario = new
                 {
                     UsuarioID = userId,
                     LaboratorioID = labSeleccionado.ID,
-                    Accion = "AccionSecundaria" // Cámbialo por lo que tu API necesite
+                    fechaCierreRemoto = fechaCierre // Cámbialo por lo que tu API necesite
                 };
 
                 string jsonSecundario = JsonSerializer.Serialize(payloadSecundario, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
@@ -265,6 +273,12 @@ public partial class InicioViewModel : ObservableObject
                         LaboratorioAceptadoId = -1;
                         await Shell.Current.DisplayAlert("Acceso Denegado", respuesta.mensaje, "OK");
                     }
+                    else if (respuesta != null && respuesta.estatus.Equals("cerrado", StringComparison.OrdinalIgnoreCase))
+                {
+                        await Shell.Current.DisplayAlert("Laboratorio Cerrado", respuesta.mensaje, "OK");
+                        LiberarLaboratorio();
+                        
+                }
                     else
                     {
                         // Cualquier otra cosa
