@@ -78,9 +78,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Pages\HistorialPrestamos.xaml.cs">
-	    <DependentUpon>HistorialPrestamos.xaml</DependentUpon>
-	  </Compile>
 	  <Compile Update="Pages\Prestamo.xaml.cs">
 	    <DependentUpon>Prestamo.xaml</DependentUpon>
 	  </Compile>
@@ -88,9 +85,6 @@
 
 	<ItemGroup>
 	  <MauiXaml Update="MyShell.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Pages\HistorialPrestamos.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\IniciarSesion.xaml">
@@ -102,16 +96,10 @@
 	  <MauiXaml Update="Pages\Logout.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Pages\NewPage1.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
 	  <MauiXaml Update="Pages\Password.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\Prestamo.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Pages\Registro.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

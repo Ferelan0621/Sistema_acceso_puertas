@@ -12,37 +12,42 @@ namespace Movil.ViewModels
 {
     public partial class PrestamosViewModel : ObservableObject
     {
-        private CancellationTokenSource _sseCts;
-        private readonly ApiService _apiService = new ApiService();
-        private readonly int _userId;
 
+        private CancellationTokenSource _sseCts;
+
+        private readonly ApiService _apiService = new ApiService();
+
+        // Propiedades observables automáticas gracias al Toolkit
         [ObservableProperty]
         private ObservableCollection<Prestamos> _prestamos = new();
 
         [ObservableProperty]
-        private string _titulo = "Cargando mis préstamos...";
+        private string _titulo = "Cargando...";
+
+        [ObservableProperty]
+        private string _resultadoJson;
+
+        [ObservableProperty]
+        private Laboratorios _laboratorioActual;
+
+        [ObservableProperty]
+        private Laboratorios _laboratorioSeleccionado;
 
         public PrestamosViewModel()
         {
-            _userId = Preferences.Default.Get("usuarioID", 0);
-        }
 
-        // --- MÉTODOS PARA REAL-TIME (SSE) ---
+        }
+        private int _userId => Preferences.Default.Get("usuarioID", 0);
+
 
         public void IniciarEscuchaSSE()
         {
-            if (_userId == 0)
-            {
-                Titulo = "No hay una sesión activa.";
-                return;
-            }
+            if (_userId == 0) return;
 
-            Titulo = "Sincronizando préstamos en tiempo real...";
             _sseCts = new CancellationTokenSource();
 
-            // Llamamos a un nuevo método en tu ApiService específico para préstamos
-            _ = _apiService.EscucharPrestamosSSEAsync(
-                _userId,
+            // Le pasamos el _userId al servicio para que el backend sepa a quién filtrar
+            _ = _apiService.EscucharPrestamosSSEAsync(_userId,
                 datosNuevos => ActualizarListaUI(datosNuevos),
                 _sseCts.Token
             );
@@ -56,47 +61,150 @@ namespace Movil.ViewModels
 
         private void ActualizarListaUI(List<Prestamos> nuevosDatos)
         {
-            // Forzamos el hilo principal para actualizar la vista sin excepciones
+            // ¡VITAL! Todo lo que actualice la UI desde un evento SSE debe ir al MainThread
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 Prestamos.Clear();
 
                 if (nuevosDatos != null && nuevosDatos.Any())
                 {
-                    foreach (var prestamo in nuevosDatos)
+                    foreach (var pres in nuevosDatos)
                     {
-                        Prestamos.Add(prestamo);
+                        Prestamos.Add(pres);
                     }
-                    Titulo = "Mis Préstamos Activos";
+                    Titulo = "Historial de Prestamos";
                 }
                 else
                 {
-                    Titulo = "No tienes préstamos registrados.";
+                    Titulo = "No hay préstamos activos";
                 }
             });
+
         }
 
-        // Dejo tu método de carga manual por si lo necesitas para un RefreshView (Pull to refresh)
-        [RelayCommand]
-        private async Task CargarPrestamosAsync()
+
+        // Agrega este método a tu ViewModel
+        public async Task InicializarPantallaAsync()
         {
-            if (_userId == 0)
-            {
-                Titulo = "No hay una sesión activa.";
-                return;
-            }
+            // 1. Traemos los datos que ya existen usando tu método actual
+            await CargarPrestamosAsync();
+
+            // 2. Nos conectamos al broker/API para escuchar los futuros cambios
+            IniciarEscuchaSSE();
+        }
+
+        [RelayCommand]
+        public async Task CargarPrestamosAsync()
+        {
+            if (_userId == 0) return;
 
             try
             {
-                var listaPrestamos = await _apiService.ObtenerPrestamosPorUsuarioAsync(_userId);
-                ActualizarListaUI(listaPrestamos);
+                var listaPrest = await _apiService.ObtenerPrestamosPorUsuariosAsync(_userId);
+                ActualizarListaUI(listaPrest ?? new List<Prestamos>());
             }
             catch (Exception ex)
             {
                 await Shell.Current.DisplayAlert("Error", ex.Message, "OK");
-                Titulo = "Error al cargar";
+                Titulo = "Error de conexión";
             }
         }
-
     }
 }
+
+
+    
+
+
+        
+       
+        //public partial class PrestamosViewModel : ObservableObject
+        //{
+        //    private CancellationTokenSource _sseCts;
+        //    private readonly ApiService _apiService = new ApiService();
+        //    private readonly int _userId;
+
+        //    [ObservableProperty]
+        //    private ObservableCollection<Prestamos> _prestamos = new();
+
+        //    [ObservableProperty]
+        //    private string _titulo = "Cargando mis préstamos...";
+
+        //    public PrestamosViewModel()
+        //    {
+        //        _userId = Preferences.Default.Get("usuarioID", 0);
+        //    }
+
+        //    // --- MÉTODOS PARA REAL-TIME (SSE) ---
+
+        //    public void IniciarEscuchaSSE()
+        //    {
+        //        if (_userId == 0)
+        //        {
+        //            Titulo = "No hay una sesión activa.";
+        //            return;
+        //        }
+
+        //        Titulo = "Sincronizando préstamos en tiempo real...";
+        //        _sseCts = new CancellationTokenSource();
+
+        //        // Llamamos a un nuevo método en tu ApiService específico para préstamos
+        //        _ = _apiService.EscucharPrestamosSSEAsync(
+        //            _userId,
+        //            datoNuevos => ActualizarListaUI(datoNuevos),
+        //            _sseCts.Token
+        //        );
+        //    }
+
+        //    public void DetenerEscuchaSSE()
+        //    {
+        //        _sseCts?.Cancel();
+        //        _sseCts?.Dispose();
+        //    }
+
+        //    private void ActualizarListaUI(List<Prestamos> nuevosDatos)
+        //    {
+        //        // Forzamos el hilo principal para actualizar la vista sin excepciones
+        //        MainThread.BeginInvokeOnMainThread(() =>
+        //        {
+        //            Prestamos.Clear();
+
+        //            if (nuevosDatos != null && nuevosDatos.Any())
+        //            {
+        //                foreach (var prestamo in nuevosDatos)
+        //                {
+        //                    Prestamos.Add(prestamo);
+        //                }
+        //                Titulo = "Mis Préstamos Activos";
+        //            }
+        //            else
+        //            {
+        //                Titulo = "No tienes préstamos registrados.";
+        //            }
+        //        });
+        //    }
+
+        //    // Dejo tu método de carga manual por si lo necesitas para un RefreshView (Pull to refresh)
+        //    [RelayCommand]
+        //    private async Task CargarPrestamosAsync()
+        //    {
+        //        if (_userId == 0)
+        //        {
+        //            Titulo = "No hay una sesión activa.";
+        //            return;
+        //        }
+
+        //        try
+        //        {
+        //            var listaPrestamos = await _apiService.ObtenerPrestamosPorUsuariosAsync(_userId);
+        //            ActualizarListaUI(listaPrestamos);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            await Shell.Current.DisplayAlert("Error", ex.Message, "OK");
+        //            Titulo = "Error al cargar";
+        //        }
+        //    }
+
+        //}
+    

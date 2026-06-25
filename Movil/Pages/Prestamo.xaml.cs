@@ -2,29 +2,38 @@ using Movil.ViewModels;
 
 namespace Movil.Pages;
 
-public partial class Prestamo: ContentPage
+public partial class Prestamo : ContentPage
 {
-    public Prestamo(PrestamosViewModel viewModel)
+    private readonly PrestamosViewModel _viewModel;
+
+    public Prestamo()
     {
         InitializeComponent();
-        BindingContext = viewModel;
+
+        // Asignamos el ViewModel
+        _viewModel = new PrestamosViewModel();
+        BindingContext = _viewModel;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is PrestamosViewModel vm)
+
+        // 1. Cargamos la lista inicial
+        if (_viewModel.CargarPrestamosCommand.CanExecute(null))
         {
-            vm.IniciarEscuchaSSE();
+            _viewModel.CargarPrestamosCommand.Execute(null);
         }
+
+        // 2. Iniciamos la conexión SSE para recibir actualizaciones en tiempo real
+        _viewModel.IniciarEscuchaSSE();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        if (BindingContext is PrestamosViewModel vm)
-        {
-            vm.DetenerEscuchaSSE();
-        }
+
+        // 3. ¡IMPORTANTE! Cerramos la conexión SSE al salir para liberar recursos
+        _viewModel.DetenerEscuchaSSE();
     }
 }
