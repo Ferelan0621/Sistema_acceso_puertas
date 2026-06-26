@@ -24,49 +24,41 @@ namespace Shared.Models
 		[JsonPropertyName("estatus")]
 		private EstadoLaboratorio _estatus;
 
-		
+		// 🔑 DatosPuerta va aquí directamente en Laboratorios
+		[ObservableProperty]
+		[JsonPropertyName("datosPuerta")]
+		private PuertaData _datosPuerta = new PuertaData();
+
+		// 🔑 FIX 1: Si la API manda null en DatosPuerta, lo protegemos
+		partial void OnDatosPuertaChanged(PuertaData oldValue, PuertaData newValue)
+		{
+			if (newValue == null)
+				DatosPuerta = new PuertaData();
+		}
+
+		// 🔑 FIX 2: Exponemos OnPropertyChanged para forzar refresco desde el ViewModel
+		public new void OnPropertyChanged(string propertyName)
+			=> base.OnPropertyChanged(propertyName);
 
 		[JsonIgnore]
 		public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
-
 	}
-    public partial class DatosCambio : ObservableObject
-    {
 
-        [ObservableProperty]
-        [JsonPropertyName("datosPuerta")]
-        private PuertaData _datosPuerta = new PuertaData();
+	public partial class PuertaData : ObservableObject
+	{
+		[ObservableProperty]
+		private string _usuarioNombre;
 
-        // 🔑 FIX 1: Si la API manda null en DatosPuerta, lo protegemos
-        partial void OnDatosPuertaChanged(PuertaData oldValue, PuertaData newValue)
-        {
-            if (newValue == null)
-                DatosPuerta = new PuertaData();
-        }
+		[ObservableProperty]
+		private string _cargo;
 
-        // 🔑 FIX 2: Exponemos OnPropertyChanged para forzar refresco desde el ViewModel
-        public new void OnPropertyChanged(string propertyName)
-            => base.OnPropertyChanged(propertyName);
-    }
+		[ObservableProperty]
+		private string _horaInicio;
 
-    public partial class PuertaData : ObservableObject
-		{
-			[ObservableProperty]
-			private string _usuarioNombre;
+		[ObservableProperty]
+		private string _horaFinal;
 
-			[ObservableProperty]
-			private string _cargo;
-
-			[ObservableProperty]
-			private string _horaInicio;
-
-			[ObservableProperty]
-			private string _horaFinal;
-
-			[ObservableProperty]
-			private string _estadoPuerta;
-
-		}
-		
-	
+		[ObservableProperty]
+		private string _estadoPuerta;
+	}
 }

@@ -20,8 +20,9 @@ namespace Escritorio.Mvvm
 		private readonly EscritorioMQTT _miBroker;
 		private CancellationTokenSource _sseCancellationTokenSource;
 
-		[ObservableProperty]
-		private ObservableCollection<Laboratorios> _listaLaboratorios = new();
+		// Lista compartida con PeticionesViewModel
+		public ObservableCollection<Laboratorios> ListaLaboratorios
+			=> SharedData.Instance.ListaLaboratorios;
 
 		[ObservableProperty]
 		private string _statusMensaje = "Esperando conexión...";
@@ -31,9 +32,8 @@ namespace Escritorio.Mvvm
 
 		public LaboratorioViewModel()
 		{
-			_miBroker = new EscritorioMQTT();
+			_miBroker = SharedData.Instance.Broker;
 			_miBroker.MensajeRecibido += ProcesarMensajeRecibido;
-
 			_ = CargarDatosYConectarAsync();
 		}
 
@@ -42,24 +42,55 @@ namespace Escritorio.Mvvm
 			try
 			{
 				StatusMensaje = "Consultando BD...";
+
+				// 1. Cargar laboratorios
 				var labs = await _apiService.ObtenerLaboratoriosAsync();
+
+				// 2. Cargar historial de préstamos
+				var historial = await _apiService.ObtenerHistorialPrestamosAsync();
 
 				if (labs != null)
 				{
-					// Aseguramos que cada lab tenga DatosPuerta inicializado
 					foreach (var lab in labs)
 					{
 						if (lab.DatosPuerta == null)
 							lab.DatosPuerta = new PuertaData();
+
+						// 3. Solo préstamos activos (sin fecha de cierre)
+						var ultimoPrestamo = historial?
+							.Where(p => p.LaboratorioID == lab.ID
+								&& p.FechaCierre == default(DateTime)
+								&& p.FechaCierreRemoto == default(DateTime))
+							.OrderByDescending(p => p.FechaSolicitud)
+							.FirstOrDefault();
+
+						// 4. Si existe, llenar la card con sus datos
+						if (ultimoPrestamo != null)
+						{
+							lab.DatosPuerta.UsuarioNombre = ultimoPrestamo.Usuario?.Nombre
+								?? $"Usuario #{ultimoPrestamo.UsuarioID}";
+
+							lab.DatosPuerta.Cargo = ultimoPrestamo.Usuario != null
+								? ultimoPrestamo.Usuario.Rol.ToString()
+								: "Sin asignar";
+
+							lab.DatosPuerta.HoraInicio = ultimoPrestamo.FechaSolicitud
+								.ToString("dd/MM/yyyy HH:mm");
+						}
 					}
-					ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
+
+					// 5. Llenar la lista compartida
+					Application.Current.Dispatcher.Invoke(() =>
+					{
+						SharedData.Instance.ListaLaboratorios.Clear();
+						foreach (var lab in labs)
+							SharedData.Instance.ListaLaboratorios.Add(lab);
+					});
 				}
 
 				await _miBroker.ConectarAsync();
-
 				await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
 				await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
-				await _miBroker.SuscribirseAsync("peticion/movil/conexion");
 
 				StatusColor = new SolidColorBrush(Colors.Green);
 				StatusMensaje = "MQTT Conectado";
@@ -68,6 +99,7 @@ namespace Escritorio.Mvvm
 			{
 				StatusColor = new SolidColorBrush(Colors.Red);
 				StatusMensaje = $"Error de conexión: {ex.Message}";
+				System.Diagnostics.Debug.WriteLine($"[LAB] Error: {ex.Message}");
 			}
 		}
 
@@ -101,60 +133,7 @@ namespace Escritorio.Mvvm
 					});
 				}
 			}
-			// 3. Peticiones del Móvil — busca nombre y cargo en la API
-			else if (topic == "peticion/movil/conexion")
-			{
-				// Lanzamos tarea async desde el handler sync
-				_ = ProcesarPeticionMovilAsync(payload);
-			}
-		}
-
-		// 🔑 Método async separado para poder hacer await a la API
-		private async Task ProcesarPeticionMovilAsync(string payload)
-		{
-			try
-			{
-				var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-				var datos = JsonSerializer.Deserialize<PeticionMovil>(payload, opcionesJson);
-
-				if (datos == null)
-				{
-					System.Diagnostics.Debug.WriteLine("[MQTT] Payload deserializado como null");
-					return;
-				}
-
-				System.Diagnostics.Debug.WriteLine($"[MQTT] Petición recibida - UsuarioID: {datos.UsuarioID}, LaboratorioID: {datos.LaboratorioID}");
-
-				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
-
-				if (lab == null)
-				{
-					System.Diagnostics.Debug.WriteLine($"[MQTT] No se encontró laboratorio con ID: {datos.LaboratorioID}");
-					return;
-				}
-
-				// 🔑 Consulta el nombre y cargo del usuario en la API
-				var usuario = await _apiService.ObtenerUsuarioPorIdAsync(datos.UsuarioID);
-
-				
-				System.Diagnostics.Debug.WriteLine($"[API] Usuario obtenido: {usuario?.Nombre ?? "null"} - {usuario?.Rol.ToString() ?? "null"}");
-
-				Application.Current.Dispatcher.Invoke(() =>
-				{
-					lab.DatosPuerta.UsuarioNombre = usuario?.Nombre ?? "Usuario #" + datos.UsuarioID;
-					// 🔑 Rol es un enum, lo convertimos a texto legible
-					lab.DatosPuerta.Cargo = usuario != null ? usuario.Rol.ToString() : "Sin asignar";
-					lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
-					lab.DatosPuerta.EstadoPuerta = "Abierto";
-
-					// Fuerza refresco del binding anidado
-					lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-				});
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"[MQTT] Error procesando petición: {ex.Message}");
-			}
+			// Las peticiones del móvil las maneja PeticionesViewModel
 		}
 
 		[RelayCommand]
