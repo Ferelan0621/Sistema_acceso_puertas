@@ -20,8 +20,9 @@ namespace Escritorio.Mvvm
 		private readonly EscritorioMQTT _miBroker;
 		private CancellationTokenSource _sseCancellationTokenSource;
 
-		[ObservableProperty]
-		private ObservableCollection<Laboratorios> _listaLaboratorios = new();
+		// Lista compartida con PeticionesViewModel
+		public ObservableCollection<Laboratorios> ListaLaboratorios
+			=> SharedData.Instance.ListaLaboratorios;
 
 		[ObservableProperty]
 		private string _statusMensaje = "Esperando conexión...";
@@ -31,9 +32,8 @@ namespace Escritorio.Mvvm
 
 		public LaboratorioViewModel()
 		{
-			_miBroker = new EscritorioMQTT();
+			_miBroker = SharedData.Instance.Broker;
 			_miBroker.MensajeRecibido += ProcesarMensajeRecibido;
-
 			_ = CargarDatosYConectarAsync();
 		}
 
@@ -42,24 +42,55 @@ namespace Escritorio.Mvvm
 			try
 			{
 				StatusMensaje = "Consultando BD...";
+
+				// 1. Cargar laboratorios
 				var labs = await _apiService.ObtenerLaboratoriosAsync();
+
+				// 2. Cargar historial de préstamos
+				var historial = await _apiService.ObtenerHistorialPrestamosAsync();
 
 				if (labs != null)
 				{
-					// 🔑 FIX 3: Aseguramos que cada lab tenga DatosPuerta inicializado
 					foreach (var lab in labs)
 					{
 						if (lab.DatosPuerta == null)
 							lab.DatosPuerta = new PuertaData();
+
+						// 3. Solo préstamos activos (sin fecha de cierre)
+						var ultimoPrestamo = historial?
+							.Where(p => p.LaboratorioID == lab.ID
+								&& p.FechaCierre == default(DateTime)
+								&& p.FechaCierreRemoto == default(DateTime))
+							.OrderByDescending(p => p.FechaSolicitud)
+							.FirstOrDefault();
+
+						// 4. Si existe, llenar la card con sus datos
+						if (ultimoPrestamo != null)
+						{
+							lab.DatosPuerta.UsuarioNombre = ultimoPrestamo.Usuario?.Nombre
+								?? $"Usuario #{ultimoPrestamo.UsuarioID}";
+
+							lab.DatosPuerta.Cargo = ultimoPrestamo.Usuario != null
+								? ultimoPrestamo.Usuario.Rol.ToString()
+								: "Sin asignar";
+
+							lab.DatosPuerta.HoraInicio = ultimoPrestamo.FechaSolicitud
+								.ToString("dd/MM/yyyy HH:mm");
+						}
 					}
-					ListaLaboratorios = new ObservableCollection<Laboratorios>(labs);
+
+					// 5. Llenar la lista compartida
+					Application.Current.Dispatcher.Invoke(() =>
+					{
+						SharedData.Instance.ListaLaboratorios.Clear();
+						foreach (var lab in labs)
+							SharedData.Instance.ListaLaboratorios.Add(lab);
+					});
 				}
 
 				await _miBroker.ConectarAsync();
-
 				await _miBroker.SuscribirseAsync(MqttServices.statusTopic);
 				await _miBroker.SuscribirseAsync($"{MqttServices.doorTopic}/#");
-				await _miBroker.SuscribirseAsync("peticion/movil/conexion");
 
 				StatusColor = new SolidColorBrush(Colors.Green);
 				StatusMensaje = "MQTT Conectado";
@@ -68,6 +99,7 @@ namespace Escritorio.Mvvm
 			{
 				StatusColor = new SolidColorBrush(Colors.Red);
 				StatusMensaje = $"Error de conexión: {ex.Message}";
+				System.Diagnostics.Debug.WriteLine($"[LAB] Error: {ex.Message}");
 			}
 		}
 
@@ -97,50 +129,11 @@ namespace Escritorio.Mvvm
 					{
 						bool abierta = payload.Contains("open") || payload.Contains("1") || payload.Contains("true");
 						lab.DatosPuerta.EstadoPuerta = abierta ? "Abierto" : "Cerrado";
-
-						// 🔑 FIX 4: Fuerza refresco del binding anidado
 						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
 					});
 				}
 			}
-			// 3. Peticiones del Móvil
-			else if (topic == "peticion/movil/conexion")
-			{
-				try
-				{
-					var datos = JsonSerializer.Deserialize<PeticionMovil>(payload);
-					if (datos == null) return;
-
-					var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == datos.LaboratorioID);
-
-					if (lab != null)
-					{
-						Application.Current.Dispatcher.Invoke(() =>
-						{
-							// Actualiza las propiedades internas de DatosPuerta
-							lab.DatosPuerta.UsuarioNombre = !string.IsNullOrEmpty(datos.NombreUsuario)
-								? datos.NombreUsuario
-								: "Usuario #" + datos.UsuarioID;
-
-							lab.DatosPuerta.Cargo = !string.IsNullOrEmpty(datos.Cargo)
-								? datos.Cargo
-								: "Sin asignar";
-
-							lab.DatosPuerta.HoraInicio = datos.FechaPrestamo;
-							lab.DatosPuerta.EstadoPuerta = "Abierto";
-
-							// 🔑 FIX 5: Fuerza que la card entera refresque DatosPuerta
-							lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-						});
-					}
-				}
-				catch (JsonException ex)
-				{
-					// Log del error para debugging
-					System.Diagnostics.Debug.WriteLine($"[MQTT] Error deserializando peticion: {ex.Message}");
-					System.Diagnostics.Debug.WriteLine($"[MQTT] Payload recibido: {payload}");
-				}
-			}
+			// Las peticiones del móvil las maneja PeticionesViewModel
 		}
 
 		[RelayCommand]

@@ -11,160 +11,175 @@ using System.Threading;
 
 namespace Escritorio.Data
 {
-    public class ApiService
-    {
-        // o 10.0.2.2 si usas el emulador de Android.
-        private readonly HttpClient _httpClient;
-        private const string BaseUrl = ConexionHTTP.BaseUrl;
+	public class ApiService
+	{
+		private readonly HttpClient _httpClient;
+		private const string BaseUrl = ConexionHTTP.BaseUrl;
 
+		public ApiService()
+		{
+			var handler = new HttpClientHandler
+			{
+				ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+			};
+			_httpClient = new HttpClient(handler) { BaseAddress = new Uri(BaseUrl) };
+		}
 
-        public ApiService()
-        {
-            // Para desarrollo local con certificados HTTPS autofirmados en Android,
-            // necesitas un HttpClientHandler especial que ignore los errores de SSL.
-            var handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
-            };
-            _httpClient = new HttpClient(handler) { BaseAddress = new Uri(BaseUrl) };
-        }
+		public async Task<bool> IniciarSesionAsync(string usuario, string password)
+		{
+			try
+			{
+				var datosLogin = new
+				{
+					Nombre = usuario,
+					Password = password
+				};
 
-        public async Task<bool> IniciarSesionAsync(string usuario, string password)
-        {
-            try
-            {
-                // Creamos el objeto con los datos del formulario
-                var datosLogin = new
-                {
-                    Nombre = usuario,
-                    Password = password
-                };
+				var response = await _httpClient.PostAsJsonAsync("Encargados/login", datosLogin);
 
-                // Hacemos la petición POST enviando el JSON en el cuerpo
-                var response = await _httpClient.PostAsJsonAsync("Encargados/login", datosLogin);
+				if (response.IsSuccessStatusCode)
+				{
+					return true;
+				}
+				else
+				{
+					string errorContent = await response.Content.ReadAsStringAsync();
+					System.Diagnostics.Debug.WriteLine($"Error del servidor: {errorContent}");
+					return false;
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error de conexión: {ex.Message}");
+				return false;
+			}
+		}
 
-                if (response.IsSuccessStatusCode)
-                {
-                    // El servidor respondió con 200 OK
-                    return true;
-                }
-                else
-                {
-                    // Aquí puedes leer el error si el servidor mandó un BadRequest o Unauthorized
-                    string errorContent = await response.Content.ReadAsStringAsync();
-                    System.Diagnostics.Debug.WriteLine($"Error del servidor: {errorContent}");
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Aquí atrapas fallas de red, Dev Tunnel caído, o temas de SSL
-                System.Diagnostics.Debug.WriteLine($"Error de conexión: {ex.Message}");
-                return false;
-            }
-        }
-        public async Task<List<Laboratorios>> ObtenerLaboratoriosAsync()
-        {
-            try
-            {
-                // Configuración vital para que empate el camelCase del JSON con el PascalCase de C#
-                var opcionesJson = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+		public async Task<List<Laboratorios>> ObtenerLaboratoriosAsync()
+		{
+			try
+			{
+				var opcionesJson = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true
+				};
 
-                var respuesta = await _httpClient.GetAsync("Laboratorios");
-                respuesta.EnsureSuccessStatusCode();
+				var respuesta = await _httpClient.GetAsync("Laboratorios");
+				respuesta.EnsureSuccessStatusCode();
 
-                var contenido = await respuesta.Content.ReadAsStringAsync();
-                var elementos = JsonSerializer.Deserialize<List<Laboratorios>>(contenido, opcionesJson);
+				var contenido = await respuesta.Content.ReadAsStringAsync();
+				var elementos = JsonSerializer.Deserialize<List<Laboratorios>>(contenido, opcionesJson);
 
-                return elementos ?? new List<Laboratorios>();
-            }
-            catch (Exception ex)
-            {
-                // Aquí puedes manejar el error (ej. mostrar una alerta, logs)
-                Console.WriteLine($"Error en la API: {ex.Message}");
-                return new List<Laboratorios>();
-            }
-        }
-        public async Task EscucharPuertasSSEAsync(Action<SensorPuerta> onMensajeRecibido, CancellationToken cancellationToken)
-        {
-            try
-            {
-                // OJO: Cambia esta ruta por la URL real de tu API que emite los eventos SSE
-                using var request = new HttpRequestMessage(HttpMethod.Get, "Laboratorios/stream-puertas");
+				return elementos ?? new List<Laboratorios>();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error en la API: {ex.Message}");
+				return new List<Laboratorios>();
+			}
+		}
 
-                // Le decimos al servidor que queremos mantener la conexión abierta recibiendo eventos
-                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+		// 🔑 NUEVO: Obtiene un usuario por su ID desde api/Usuarios/{id}
+		public async Task<Usuarios> ObtenerUsuarioPorIdAsync(int id)
+		{
+			try
+			{
+				var opcionesJson = new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true
+				};
 
-                // HttpCompletionOption.ResponseHeadersRead es CLAVE para que no espere a que acabe la petición
-                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                response.EnsureSuccessStatusCode();
+				var respuesta = await _httpClient.GetAsync($"Usuarios/{id}");
 
-                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                using var reader = new StreamReader(stream);
+				// Si no existe el usuario, regresa null sin tronar
+				if (!respuesta.IsSuccessStatusCode)
+				{
+					System.Diagnostics.Debug.WriteLine($"[API] Usuario {id} no encontrado. Status: {respuesta.StatusCode}");
+					return null;
+				}
 
-                // Bucle infinito que lee línea por línea mientras no se cancele
-                while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
-                {
-                    var line = await reader.ReadLineAsync();
+				var contenido = await respuesta.Content.ReadAsStringAsync();
+				System.Diagnostics.Debug.WriteLine($"[API] Usuario recibido: {contenido}");
 
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+				var usuario = JsonSerializer.Deserialize<Usuarios>(contenido, opcionesJson);
+				return usuario;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[API] Error obteniendo usuario {id}: {ex.Message}");
+				return null;
+			}
+		}
 
-                    // SSE estándar manda los datos empezando con "data: "
-                    if (line.StartsWith("data: "))
-                    {
-                        var json = line.Substring(6); // Cortamos la palabra "data: "
+		public async Task EscucharPuertasSSEAsync(Action<SensorPuerta> onMensajeRecibido, CancellationToken cancellationToken)
+		{
+			try
+			{
+				using var request = new HttpRequestMessage(HttpMethod.Get, "Laboratorios/stream-puertas");
+				request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
 
-                        try
-                        {
-                            var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                            var evento = JsonSerializer.Deserialize<SensorPuerta>(json, opcionesJson);
+				using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+				response.EnsureSuccessStatusCode();
 
-                            if (evento != null)
-                            {
-                                // Disparamos la acción de vuelta al ViewModel
-                                onMensajeRecibido?.Invoke(evento);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Error parseando JSON del SSE: {ex.Message}");
-                        }
-                    }
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                System.Diagnostics.Debug.WriteLine("Conexión SSE terminada a propósito.");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error de conexión SSE: {ex.Message}");
-                // Aquí podrías agregar un Task.Delay y volver a llamar a la función para autoconectar
-            }
-        }
-        public async Task<List<Prestamos>> ObtenerHistorialPrestamosAsync()
-        {
-            try
-            {
-                var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+				using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+				using var reader = new StreamReader(stream);
 
-                // Asegúrate de que el endpoint "Prestamos" coincida con la ruta en tu API (Controlador)
-                var respuesta = await _httpClient.GetAsync("Prestamos");
-                respuesta.EnsureSuccessStatusCode();
+				while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+				{
+					var line = await reader.ReadLineAsync();
 
-                var contenido = await respuesta.Content.ReadAsStringAsync();
-                var elementos = JsonSerializer.Deserialize<List<Prestamos>>(contenido, opcionesJson);
+					if (string.IsNullOrWhiteSpace(line)) continue;
 
-                return elementos ?? new List<Prestamos>();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error en la API cargando historial: {ex.Message}");
-                return new List<Prestamos>();
-            }
-        }
-    }
+					if (line.StartsWith("data: "))
+					{
+						var json = line.Substring(6);
+
+						try
+						{
+							var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+							var evento = JsonSerializer.Deserialize<SensorPuerta>(json, opcionesJson);
+
+							if (evento != null)
+							{
+								onMensajeRecibido?.Invoke(evento);
+							}
+						}
+						catch (Exception ex)
+						{
+							System.Diagnostics.Debug.WriteLine($"Error parseando JSON del SSE: {ex.Message}");
+						}
+					}
+				}
+			}
+			catch (TaskCanceledException)
+			{
+				System.Diagnostics.Debug.WriteLine("Conexión SSE terminada a propósito.");
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error de conexión SSE: {ex.Message}");
+			}
+		}
+
+		public async Task<List<Prestamos>> ObtenerHistorialPrestamosAsync()
+		{
+			try
+			{
+				var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+				var respuesta = await _httpClient.GetAsync("Prestamos");
+				respuesta.EnsureSuccessStatusCode();
+
+				var contenido = await respuesta.Content.ReadAsStringAsync();
+				var elementos = JsonSerializer.Deserialize<List<Prestamos>>(contenido, opcionesJson);
+
+				return elementos ?? new List<Prestamos>();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error en la API cargando historial: {ex.Message}");
+				return new List<Prestamos>();
+			}
+		}
+	}
 }
