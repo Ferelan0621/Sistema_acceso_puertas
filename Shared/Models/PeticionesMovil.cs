@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json.Serialization; // ¡CRÍTICO! Agregado para usar las etiquetas
+using System.Text.Json.Serialization; 
 
 namespace Shared.Models
 {

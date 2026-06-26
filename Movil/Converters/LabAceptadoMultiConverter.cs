@@ -31,14 +31,45 @@ namespace Movil.Converters
                 }
 
                 // Si este es el aceptado: Morado
-                if (idLab == idAceptado) return Color.FromArgb("#8E44AD");
-
-                // Si es otro, está inhabilitado: Gris
-                return Color.FromArgb("#B0BEC5");
+                if (idLab == idAceptado)
+                    return Color.FromArgb("#9C27B0"); // Morado (Diferente a verde, rojo, azul o naranja)
+                else
+                    return Color.FromArgb("#E0E0E0"); // Gris (Visualmente inhabilitado)
             }
-            return Colors.Transparent;
+            return Colors.White;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }
+//public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+//    {
+//        if (values == null || values.Length < 3) return Colors.Transparent;
+
+//        if (values[0] is int id && values[1] is int labAceptadoId && values[2] is EstadoLaboratorio estatus)
+//        {
+//            // CASO A: Ya hay un laboratorio aceptado
+//            if (labAceptadoId != -1)
+//            {
+//                if (id == labAceptadoId)
+//                    return Color.FromArgb("#9C27B0"); // Morado (Diferente a verde, rojo, azul o naranja)
+//                else
+//                    return Color.FromArgb("#E0E0E0"); // Gris (Visualmente inhabilitado)
+//            }
+
+//            // CASO B: Flujo normal, nadie ha sido aceptado aún
+//            return estatus switch
+//            {
+//                EstadoLaboratorio.Disponible => Color.FromArgb("#FFFFFF"), // Blanco/Normal
+//                EstadoLaboratorio.Ocupado => Color.FromArgb("#FFEBEE"), // Ocupado
+//                _ => Colors.White
+//            };
+//        }
+//        return Colors.White;
+//    }
+
+//    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+//    {
+//        throw new NotImplementedException();
+//    }
+//}

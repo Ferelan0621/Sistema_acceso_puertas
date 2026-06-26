@@ -36,7 +36,7 @@ public partial class InicioViewModel : ObservableObject
     [ObservableProperty]
     private int _laboratorioAceptadoId = -1;
 
-    // Clase interna para desarmar el JSON de MQTT
+    // Clase interna para desarmar el JSON de MQTT exactamente como lo envías
     private class RespuestaMqtt
     {
         public string estatus { get; set; }
@@ -69,6 +69,7 @@ public partial class InicioViewModel : ObservableObject
         LaboratorioAceptadoId = -1;
         _ = CargarLaboratoriosAsync();
     }
+
     public void DetenerEscuchaSSE()
     {
         _sseCts?.Cancel();
@@ -86,7 +87,7 @@ public partial class InicioViewModel : ObservableObject
             if (labAceptado != null)
             {
                 Laboratorios.Add(labAceptado);
-                nuevosDatos.Remove(labAceptado); // Lo quitamos de la lista para no duplicarlo
+                nuevosDatos.Remove(labAceptado);
             }
         }
 
@@ -107,7 +108,7 @@ public partial class InicioViewModel : ObservableObject
             var listaLabs = await _apiService.ObtenerLaboratoriosAsync();
             if (listaLabs != null)
             {
-                ActualizarListaUI(listaLabs); // Reutilizamos la lógica de ordenar
+                ActualizarListaUI(listaLabs);
             }
         }
         catch (Exception ex)
@@ -116,34 +117,12 @@ public partial class InicioViewModel : ObservableObject
         }
     }
 
-    private async Task ConectarYSuscribirAsync()
-    {
-        try
-        {
-            await _miBroker.ConectarAsync();
-            await _miBroker.SuscribirseAsync(MqttServices.respuesta);
-        }
-        catch (Exception ex)
-        {
-            bool reintentar = await Shell.Current.DisplayAlert(
-                "Error de Conexión",
-                $"Error al inicializar la conexión MQTT: {ex.Message}",
-                "Intentar de nuevo",
-                "OK");
-
-            if (reintentar)
-            {
-                await ConectarYSuscribirAsync();
-            }
-        }
-    }
-
     [RelayCommand]
     private async Task SeleccionarLaboratorioAsync(Laboratorios labSeleccionado)
     {
         if (labSeleccionado == null) return;
 
-        // Limpiamos la selección visual
+        // Limpiamos la selección visual para evitar que se quede "pegado"
         LaboratorioSeleccionado = null;
 
         // CASO A: YA TENEMOS UN LABORATORIO ACEPTADO
@@ -151,41 +130,41 @@ public partial class InicioViewModel : ObservableObject
         {
             if (labSeleccionado.ID != LaboratorioAceptadoId)
             {
-                // Le dio clic a otro (están inhabilitados)
+                // Le dio clic a uno gris/inhabilitado
                 await Shell.Current.DisplayAlertAsync("Aviso", "Ya tienes un laboratorio en uso. Los demás están inhabilitados.", "OK");
                 return;
             }
-            else 
+            else
             {
+                // ES EL LABORATORIO ACEPTADO: Mandar comando secundario (ej. cerrar puerta o liberar)
                 string fechaCierre = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
 
-                // Le dio clic de nuevo al laboratorio aceptado (MANDAR COMANDO SECUNDARIO)
                 var payloadSecundario = new
                 {
                     UsuarioID = userId,
                     LaboratorioID = labSeleccionado.ID,
-                    fechaCierreRemoto = fechaCierre // Cámbialo por lo que tu API necesite
+                    FechaCierreRemoto = fechaCierre
                 };
 
                 string jsonSecundario = JsonSerializer.Serialize(payloadSecundario, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
                 try
                 {
-                    await _miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonSecundario);
+                    await _miBroker.PublicarMensajeAsync(MqttServices.cerrado, jsonSecundario);
                     await Shell.Current.DisplayAlert("Comando Enviado", "Se envió la petición extra al laboratorio.", "OK");
                 }
                 catch (Exception ex)
                 {
                     await Shell.Current.DisplayAlert("Error", $"Fallo al enviar: {ex.Message}", "OK");
                 }
-                return; // Cortamos ejecución aquí
+                return;
             }
         }
 
         // CASO B: FLUJO NORMAL (Pedir préstamo de uno nuevo)
         if (labSeleccionado.Estatus != EstadoLaboratorio.Disponible)
         {
-            await Shell.Current.DisplayAlertAsync("Aviso", $"El Laboratorio {labSeleccionado.NombreLaboratorio} no esta disponible.", "OK");
+            await Shell.Current.DisplayAlertAsync("Aviso", $"El Laboratorio {labSeleccionado.NombreLaboratorio} no está disponible.", "OK");
             return;
         }
 
@@ -197,12 +176,7 @@ public partial class InicioViewModel : ObservableObject
             FechaPrestamo = fechaSolicitud
         };
 
-        var opcionesJson = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
+        var opcionesJson = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         string jsonFinal = JsonSerializer.Serialize(payloadSolicitud, opcionesJson);
         ResultadoJson = jsonFinal;
 
@@ -215,18 +189,17 @@ public partial class InicioViewModel : ObservableObject
         try
         {
             await _miBroker.PublicarMensajeAsync(MqttServices.conexion, jsonFinal);
-            await Shell.Current.DisplayAlert("Éxito", "La petición de apertura se envió correctamente.", "OK");
+            await Shell.Current.DisplayAlert("Éxito", "Petición de apertura enviada.", "OK");
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Error de Envío", $"Error al enviar el mensaje: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlert("Error", $"Error al enviar el mensaje: {ex.Message}", "OK");
         }
     }
 
     private async Task IniciarComunicacionMqtt()
     {
         if (userId == 0) return;
-
         try
         {
             _miBroker.MensajeRecibido += AlRecibirMensajeMqtt;
@@ -239,8 +212,6 @@ public partial class InicioViewModel : ObservableObject
         }
     }
 
-
-
     private void AlRecibirMensajeMqtt(string topic, string payload)
     {
         if (topic == $"{MqttServices.respuesta}/{userId}")
@@ -249,15 +220,15 @@ public partial class InicioViewModel : ObservableObject
             {
                 try
                 {
-                    // Convertimos el JSON de respuesta
+                    // Convertimos el JSON entrante
                     var respuesta = JsonSerializer.Deserialize<RespuestaMqtt>(payload, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                     if (respuesta != null && respuesta.estatus.Equals("aceptado", StringComparison.OrdinalIgnoreCase))
                     {
-                        // NOS ACEPTARON
+                        // NOS ACEPTARON: Asignamos el ID
                         LaboratorioAceptadoId = respuesta.laboratorioID;
 
-                        // Lo subimos al primer lugar de la lista visualmente
+                        // Reordenar la lista para forzar que quede en primer plano
                         var labAceptado = Laboratorios.FirstOrDefault(l => l.ID == LaboratorioAceptadoId);
                         if (labAceptado != null)
                         {
@@ -274,20 +245,13 @@ public partial class InicioViewModel : ObservableObject
                         await Shell.Current.DisplayAlert("Acceso Denegado", respuesta.mensaje, "OK");
                     }
                     else if (respuesta != null && respuesta.estatus.Equals("cerrado", StringComparison.OrdinalIgnoreCase))
-                {
+                    {
                         await Shell.Current.DisplayAlert("Laboratorio Cerrado", respuesta.mensaje, "OK");
                         LiberarLaboratorio();
-                        
-                }
-                    else
-                    {
-                        // Cualquier otra cosa
-                        await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
                     }
                 }
                 catch
                 {
-                    // Si no es un JSON válido, lo muestra en texto plano
                     await Shell.Current.DisplayAlert("Mensaje", payload, "OK");
                 }
             });
