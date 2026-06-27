@@ -30,14 +30,21 @@ namespace Escritorio.Windows
 
             try
             {
-                InicioWindow ventanaInicio = new InicioWindow();
-                ventanaInicio.Show();
+                MainWindow ventanaInicioSesion = new MainWindow();
+                ventanaInicioSesion.Show();
                 this.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al cargar la ventana: \n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void btnHistorialpeticiones_Click(object sender, RoutedEventArgs e)
+        {
+            HistorialpeticionesWindow ventanaHistorial = new HistorialpeticionesWindow();
+            ventanaHistorial.Show();
+            this.Hide();
         }
     }
 }
