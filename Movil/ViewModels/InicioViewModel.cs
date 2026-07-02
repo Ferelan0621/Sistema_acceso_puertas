@@ -268,5 +268,9 @@ public partial class InicioViewModel : ObservableObject
         Laboratorios?.Clear();
         ResultadoJson = string.Empty;
         LaboratorioSeleccionado = null;
+        if(userId != userId)
+        {
+            LiberarLaboratorio();
+        }
     }
 }
