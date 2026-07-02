@@ -10,9 +10,11 @@
     </Window.DataContext>
 
     <Grid>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Button x:Name="btnImagenregresar" Grid.Row="0" HorizontalAlignment="Left" Margin="20,20,0,10" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
@@ -46,8 +48,6 @@
                             <Grid>
                                 <Label Content="{Binding NombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
 
-                                
-
                                 <Image Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
                                     <Image.Style>
                                         <Style TargetType="Image">
@@ -63,35 +63,44 @@
 
                                 <Label Content="{Binding DireccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
 
-								<StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,135,0,0" VerticalAlignment="Top">
-									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-										<StackPanel Margin="0,0,10,0">
-											<Label Content="Inicio" FontSize="10" Padding="0"/>
-											<Label Content="{Binding DatosPuerta.HoraInicio}" FontWeight="SemiBold" Padding="0"/>
-										</StackPanel>
-										<StackPanel Margin="10,0,0,0">
-											<Label Content="Final" FontSize="10" Padding="0"/>
-											<Label Content="{Binding DatosPuerta.HoraFinal}" FontWeight="SemiBold" Padding="0"/>
-										</StackPanel>
-									</StackPanel>
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,135,0,0" VerticalAlignment="Top">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <StackPanel Margin="0,0,10,0">
+                                            <Label Content="Inicio" FontSize="10" Padding="0"/>
+                                            <Label Content="{Binding DatosPuerta.HoraInicio}" FontWeight="SemiBold" Padding="0"/>
+                                        </StackPanel>
+                                        <StackPanel Margin="10,0,0,0">
+                                            <Label Content="Final" FontSize="10" Padding="0"/>
+                                            <Label Content="{Binding DatosPuerta.HoraFinal}" FontWeight="SemiBold" Padding="0"/>
+                                        </StackPanel>
+                                    </StackPanel>
 
-									<StackPanel Margin="0,10,0,0">
-										<TextBlock Text="{Binding DatosPuerta.UsuarioNombre, StringFormat='Usuario: {0}'}" 
-                   FontSize="10" FontWeight="Bold" TextAlignment="Center"/>
-										<TextBlock Text="{Binding DatosPuerta.Cargo, StringFormat='Cargo: {0}'}" 
-                   FontSize="10" FontStyle="Italic" TextAlignment="Center"/>
-									</StackPanel>
-								</StackPanel>
+                                    <StackPanel Margin="0,10,0,0">
+                                        <TextBlock Text="{Binding DatosPuerta.UsuarioNombre, StringFormat='Usuario: \{0\}'}" 
+                                                   FontSize="10" FontWeight="Bold" TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding DatosPuerta.Cargo, StringFormat='Cargo: \{0\}'}" 
+                                                   FontSize="10" FontStyle="Italic" TextAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
 
-								<Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Cursor="Hand"
-            Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-            CommandParameter="{Binding}"/>
+                                <Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Cursor="Hand"
+                                        Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        CommandParameter="{Binding}"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-
             </ItemsControl>
         </ScrollViewer>
+
+        <Button x:Name="btnHistorialpeticiones" 
+                Grid.Row="2" 
+                Content="Ver Historial de Peticiones" 
+                Background="#0097E6" Foreground="White" FontWeight="SemiBold" 
+                Padding="15,8" Cursor="Hand" BorderThickness="0" 
+                HorizontalAlignment="Right" 
+                Margin="0,0,20,20" 
+                Click="btnHistorialpeticiones_Click"/>
+
     </Grid>
 </Window>
