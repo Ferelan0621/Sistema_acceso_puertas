@@ -6,7 +6,9 @@
              xmlns:viewmodels="clr-namespace:Movil.ViewModels"
              x:DataType="viewmodels:InicioViewModel"
              x:Class="Movil.Pages.Inicio"
+             BackgroundColor="#FAFAFC"
              x:Name="paginaInicio">
+
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters:EstadoToColorConverterBase x:Key="ColorEstado" />
@@ -14,14 +16,50 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="25">
 
-        <Label Grid.Row="0" 
-               Text="{Binding Titulo}" 
-               FontSize="22" 
-               FontAttributes="Bold" />
-        <Label Text="{Binding username}"/>
+        <!--======================-->
+        <!-- ENCABEZADO MODO CLARO -->
+        <!--======================-->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" VerticalOptions="Center" >
+            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                <Label Text="BIENVENIDO" 
+                       FontSize="13" 
+                       TextColor="#8E8E93" 
+                       FontAttributes="Bold" 
+                       CharacterSpacing="1.5"/>
+                <Label Text="{Binding username}"
+                       FontSize="13"
+                       TextColor="#7A0017"
+                       FontAttributes="Bold"
+                       CharacterSpacing="1"
+                       VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+                <Label Text="Selecciona un Laboratorio" 
+                       FontSize="26" 
+                       FontAttributes="Bold" 
+                       TextColor="#1C1C1E" />
+                <!-- Línea decorativa guinda debajo del título -->
+                <BoxView Color="#7A0017" 
+                         WidthRequest="40" 
+                         HeightRequest="3" 
+                         HorizontalOptions="Start" 
+                         Margin="0,6,0,0"/>
+            </VerticalStackLayout>
 
+
+                <Label Grid.Column="1" 
+                   Text="🏢" 
+                   FontSize="32" 
+                   Opacity="0.3"
+                   VerticalOptions="Center" 
+                   Margin="0,0,10,0"/>
+        </Grid>
+
+        <!--======================-->
+        <!-- GRID DE LABORATORIOS -->
+        <!--======================-->
         <CollectionView Grid.Row="1"
                         x:Name="gridLaboratorios"
                         ItemsSource="{Binding Laboratorios}"
@@ -31,13 +69,21 @@
                         SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
 
             <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="15" VerticalItemSpacing="15" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="local:Laboratorios">
-                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1.5" HeightRequest="130">
+                    <Border StrokeThickness="1" HeightRequest="150">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
 
+                        <Border.Shadow>
+                            <Shadow Radius="8" Offset="0,4" Opacity="0.06" Brush="Black"/>
+                        </Border.Shadow>
+
+                        <!-- Mantiene tu convertidor original (Si devuelve blanco por defecto, se mantendrá blanco) -->
                         <Border.BackgroundColor>
                             <MultiBinding Converter="{StaticResource ColorAceptado}">
                                 <Binding Path="ID" />
@@ -46,35 +92,86 @@
                             </MultiBinding>
                         </Border.BackgroundColor>
 
+                        <!-- Estados visuales de selección -->
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup Name="CommonStates">
                                 <VisualState Name="Normal">
                                     <VisualState.Setters>
-                                        <Setter Property="Stroke" Value="#D1D1D1" />
+                                        <Setter Property="Stroke" Value="#E5E5EA" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState Name="Selected">
                                     <VisualState.Setters>
-                                        <Setter Property="BackgroundColor" Value="#5EE3F2FD" />
-                                        <Setter Property="Stroke" Value="#005A9C" />
+                                        <Setter Property="Stroke" Value="#7A0017" />
+                                        <Setter Property="StrokeThickness" Value="2"/>
                                     </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
 
-                        <Grid Padding="10" RowDefinitions="Auto, *, Auto">
-                            <Label Grid.Row="0" Text="{Binding Edificio, StringFormat='Edificio: {0}'}" FontSize="12" TextColor="LightBlue" FontAttributes="Bold" />
+                        <!-- Distribución idéntica a la imagen pero en colores claros -->
+                        <Grid Padding="15" RowDefinitions="Auto, *, Auto">
 
+                            <!-- Superior: Icono Edificio (Izquierda) y Texto Edificio (Derecha) -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+                                <Border Grid.Column="0" 
+                                        WidthRequest="32" 
+                                        HeightRequest="32" 
+                                        BackgroundColor="#F0F0F2" 
+                                        StrokeThickness="0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="🏢" 
+                                           FontSize="14" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Grid.Column="1" 
+                                       Text="{Binding Edificio, StringFormat='Edificio: {0}'}" 
+                                       TextColor="Black" 
+                                       FontSize="12" 
+                                       FontAttributes="Bold" 
+                                       HorizontalOptions="End" 
+                                       VerticalOptions="Center"/>
+                            </Grid>
+
+                            <!-- Central: Nombre del Laboratorio en texto oscuro -->
                             <VerticalStackLayout Grid.Row="1" VerticalOptions="Center">
-                                <Label Text="{Binding NombreLaboratorio}" TextColor="#FF7CB7DE" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" MaxLines="2" />
+                                <Label Text="{Binding NombreLaboratorio}" 
+                                       TextColor="#1C1C1E" 
+                                       FontSize="15" 
+                                       FontAttributes="Bold" 
+                                       HorizontalTextAlignment="Center" 
+                                       MaxLines="2" 
+                                       LineBreakMode="TailTruncation"/>
                             </VerticalStackLayout>
 
-                            <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="5">
-                                <Label Text="Estado:" FontSize="11" TextColor="LightBlue"/>
-                                <Label Text="{Binding Estatus}" FontSize="11" FontAttributes="Bold" TextColor="LightSkyBlue" />
-                            </HorizontalStackLayout>
-                        </Grid>
+                            <!-- Inferior: Cápsula de Estado sutil -->
+                            <Border Grid.Row="2" 
+                                    HorizontalOptions="Start" 
+                                    BackgroundColor="#EBF9F1" 
+                                    Padding="0,3" 
+                                    StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12"/>
+                                </Border.StrokeShape>
 
+                                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                    <Label Text="●" 
+                                           TextColor="#27AE60" 
+                                           FontSize="18" 
+                                           VerticalOptions="Center"/>
+                                    <Label Text="{Binding Estatus, StringFormat='Estado:{0}  '    }" 
+                                           FontSize="11" 
+                                           FontAttributes="Bold" 
+                                           TextColor="#219653" 
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </Border>
+
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

@@ -2,8 +2,40 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Movil.Pages.Logout"
+             BackgroundColor="#FFFFFF"
+             Shell.NavBarIsVisible="False"
+             NavigationPage.HasNavigationBar="False"
              Title="Logout">
-    <VerticalStackLayout>
-        <Button x:Name="Cerrar_Sesión" Text="Cerrar Sesion" Clicked="Cerrar_Sesión_Clicked" HorizontalOptions="Center" VerticalOptions="Center"/>
-    </VerticalStackLayout>
+
+    <!-- Un contenedor centralizado que ocupa toda la pantalla de forma limpia -->
+    <Grid Padding="30">
+
+        <VerticalStackLayout VerticalOptions="Center" 
+                             HorizontalOptions="Center" 
+                             Spacing="20">
+
+            <!-- Texto sutil de confirmación arriba del botón -->
+            <Label Text="¿Deseas salir de la aplicación?" 
+                   FontSize="16" 
+                   TextColor="#8E8E93" 
+                   HorizontalTextAlignment="Center" 
+                   FontAttributes="Bold"/>
+
+            <!-- Tu botón original pero estilizado al estilo premium minimalista -->
+            <Button x:Name="Cerrar_Sesión" 
+                    Text="Cerrar Sesión" 
+                    Clicked="Cerrar_Sesión_Clicked" 
+                    BackgroundColor="#111111" 
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="14"
+                    CornerRadius="8"
+                    HeightRequest="48"
+                    WidthRequest="220"
+                    HorizontalOptions="Center" 
+                    VerticalOptions="Center"/>
+
+        </VerticalStackLayout>
+
+    </Grid>
 </ContentPage>

@@ -5,44 +5,120 @@
              xmlns:viewmodels="clr-namespace:Movil.ViewModels"
              x:DataType="viewmodels:PrestamosViewModel"
              x:Class="Movil.Pages.Prestamo"
-             Title="Mis Préstamos">
+             BackgroundColor="#FFFFFF"
+             Shell.NavBarIsVisible="False"
+             NavigationPage.HasNavigationBar="False"
+             Title="">
 
-    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="25">
 
-        <Label Grid.Row="0" 
-               Text="{Binding Titulo}" 
-               FontSize="22" 
-               FontAttributes="Bold" />
+        <!--======================-->
+        <!-- ENCABEZADO MODO CLARO -->
+        <!--======================-->
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label Text="HISTORIAL" 
+                   FontSize="11" 
+                   TextColor="#8E8E93" 
+                   FontAttributes="Bold" 
+                   CharacterSpacing="1.5"/>
+            <Label Text="{Binding Titulo}" 
+                   FontSize="26" 
+                   FontAttributes="Bold" 
+                   TextColor="#1C1C1E" />
+            <!-- Línea decorativa guinda debajo del título -->
+            <BoxView Color="#7A0017" 
+                     WidthRequest="40" 
+                     HeightRequest="3" 
+                     HorizontalOptions="Start" 
+                     Margin="0,6,0,0"/>
+        </VerticalStackLayout>
 
+        <!--======================-->
+        <!-- LISTA DE PRÉSTAMOS   -->
+        <!--======================-->
         <CollectionView Grid.Row="1"
                         ItemsSource="{Binding Prestamos}"
                         SelectionMode="None">
 
             <CollectionView.ItemsLayout>
-                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="15" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="local:Prestamos">
-                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="#005A9C" Padding="15">
-                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="5">
+                    <Border StrokeThickness="1" Stroke="#E5E5EA" BackgroundColor="White" Padding="15">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
 
-                            <Label Grid.Row="0" 
-                                   Text="{Binding Laboratorio.NombreLaboratorio, StringFormat='Laboratorio: {0}'}" 
-                                   FontSize="16" FontAttributes="Bold" TextColor="#FF7CB7DE" />
+                        <Border.Shadow>
+                            <Shadow Radius="8" Offset="0,4" Opacity="0.06" Brush="Black"/>
+                        </Border.Shadow>
 
-                            <HorizontalStackLayout Grid.Row="1" Spacing="5">
-                                <Label Text="Fecha Solicitud:" FontSize="12" TextColor="Gray" />
-                                <Label Text="{Binding FechaSolicitud, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
-                                       FontSize="12" FontAttributes="Bold" />
-                            </HorizontalStackLayout>
+                        <Grid RowDefinitions="Auto, *, Auto" RowSpacing="12">
 
-                            <HorizontalStackLayout Grid.Row="2" Spacing="5">
-                                <Label Text="Estado:" FontSize="12" TextColor="Gray" />
-                                <Label Text="{Binding FechaApertura, StringFormat='Apertura: {0:HH:mm}'}" 
-                                       FontSize="12" TextColor="Green" FontAttributes="Bold"/>
-                                <Label Text="{Binding UsuarioID}"/>
-                            </HorizontalStackLayout>
+                            <!-- Superior: Icono de Lab y ID del Usuario -->
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+                                <Border Grid.Column="0" 
+                                        WidthRequest="32" 
+                                        HeightRequest="32" 
+                                        BackgroundColor="#F0F0F2" 
+                                        StrokeThickness="0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="🔬" 
+                                           FontSize="14" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center"/>
+                                </Border>
+
+                                <HorizontalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center" Spacing="4">
+                                    <Label Text="ID:" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold"/>
+                                    <Label Text="{Binding UsuarioID}" FontSize="11" TextColor="#48484A" FontAttributes="Bold"/>
+                                </HorizontalStackLayout>
+                            </Grid>
+
+                            <!-- Central: Nombre del Laboratorio -->
+                            <VerticalStackLayout Grid.Row="1" Spacing="2">
+                                <Label Text="LABORATORIO ASIGNADO" FontSize="10" TextColor="#7A0017" FontAttributes="Bold" CharacterSpacing="0.5"/>
+                                <Label Text="{Binding Laboratorio.NombreLaboratorio}" 
+                                       FontSize="16" 
+                                       FontAttributes="Bold" 
+                                       TextColor="#1C1C1E" />
+                            </VerticalStackLayout>
+
+                            <!-- Inferior: Tiempos y Fechas con separador sutil -->
+                            <StackLayout Grid.Row="2" Orientation="Vertical">
+                                <BoxView HeightRequest="0.5" Color="#E5E5EA" Margin="0,0,0,10"/>
+
+                                <Grid ColumnDefinitions="*, *">
+                                    <!-- Fecha de Solicitud (Izquierda) -->
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <HorizontalStackLayout Spacing="4">
+                                            <Label Text="📅" FontSize="11" VerticalOptions="Center"/>
+                                            <Label Text="Solicitud" FontSize="11" TextColor="#8E8E93" FontAttributes="Bold"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding FechaSolicitud, StringFormat='{0:dd/MM/yyyy HH:mm}'}" 
+                                               FontSize="12" 
+                                               FontAttributes="Bold" 
+                                               TextColor="#3A3A3C"/>
+                                    </VerticalStackLayout>
+
+                                    <!-- Estado / Apertura (Derecha) -->
+                                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="2">
+                                        <HorizontalStackLayout Spacing="4" HorizontalOptions="End">
+                                            <Label Text="🔓" FontSize="11" VerticalOptions="Center"/>
+                                            <Label Text="Apertura" FontSize="11" TextColor="#27AE60" FontAttributes="Bold"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding FechaApertura, StringFormat='{0:HH:mm} hrs'}" 
+                                               FontSize="12" 
+                                               FontAttributes="Bold" 
+                                               TextColor="#219653"
+                                               HorizontalOptions="End"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </StackLayout>
 
                         </Grid>
                     </Border>
