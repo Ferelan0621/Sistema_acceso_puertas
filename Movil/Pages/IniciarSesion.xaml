@@ -1,45 +1,191 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Movil.Pages.IniciarSesion"
-             Title="IniciarSesion">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+    x:Class="Movil.Pages.IniciarSesion"
+    Shell.NavBarIsVisible="False"
+    NavigationPage.HasNavigationBar="False"
+    android:Application.WindowSoftInputModeAdjust="Resize"
+    BackgroundColor="Transparent"
+    Title="Iniciar Sesión">
+
     <Grid>
-        <VerticalStackLayout>
-        <Label
-    x:Name="txtClave"
-    Text="Clave ISSEMYM"
-    />
-        <Entry Placeholder=""
-      x:Name="etClave"/>
+        <ScrollView
+            x:Name="MainScroll"
+            VerticalScrollBarVisibility="Never">
 
-        <Label
-    x:Name="txtPasword"
-    Text="Contraseña"/>
-        <Entry Placeholder=""
-       x:Name="etPasword"
-       />
+            <Grid RowDefinitions="350,*">
 
-        <Button
-    x:Name="btnIniciarsesion"
-    Margin="60,50"
-            IsEnabled="True"
-    Text="Iniciar Sesion"
-            Clicked="btnIniciarsesion_Clicked"
-    />
-          
-  
-            <Label
-                Text="¿Olvidaste tu contraseña?"
-                TextDecorations="Underline"
-                TextColor="DodgerBlue"
-                HorizontalOptions="Center">
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnForgotPasswordTapped"/>
-                </Label.GestureRecognizers>
-            </Label>
-        </VerticalStackLayout>
-        <ActivityIndicator x:Name="LoadingIndicator" 
-                           IsRunning="False" 
-                           HorizontalOptions="Center"  />
+                <!--======================-->
+                <!-- IMAGEN SUPERIOR -->
+                <!--======================-->
+                <Grid>
+                    <Image
+                        Source="uni.png"
+                        Aspect="AspectFill"/>
+
+                    <BoxView>
+                        <BoxView.Background>
+                            <LinearGradientBrush
+                                StartPoint="0,0"
+                                EndPoint="0,1">
+                                <GradientStop Color="#00000000" Offset="0"/>
+                                <GradientStop Color="#80000000" Offset="1"/>
+                            </LinearGradientBrush>
+                        </BoxView.Background>
+                    </BoxView>
+
+                    <VerticalStackLayout
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"
+                        Spacing="15">
+
+                        <Grid
+                            WidthRequest="320"
+                            ColumnDefinitions="*,Auto,*">
+
+                            <Line
+                                Grid.Column="0"
+                                X1="0" Y1="0" X2="80" Y2="0"
+                                Stroke="White"
+                                StrokeThickness="1"
+                                VerticalOptions="Center"/>
+
+                            <Image
+                                Grid.Column="1"
+                                Source="login.png"
+                                WidthRequest="90"
+                                HeightRequest="40"
+                                Margin="10,0"/>
+
+                            <Line
+                                Grid.Column="2"
+                                X1="0" Y1="0" X2="80" Y2="0"
+                                Stroke="White"
+                                StrokeThickness="1"
+                                VerticalOptions="Center"/>
+                        </Grid>
+
+                        <Label
+                            Text="Sistema de Control de Laboratorios"
+                            TextColor="White"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"/>
+
+                        <Label
+                            Text="UNIVERSIDAD POLITÉCNICA DE TECÁMAC"
+                            TextColor="White"
+                            FontSize="11"
+                            CharacterSpacing="1.5"
+                            HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!--======================-->
+                <!-- FORMULARIO -->
+                <!--======================-->
+                <Border
+                    Grid.Row="1"
+                    Margin="0,-45,0,0"
+                    BackgroundColor="White"
+                    StrokeThickness="0"
+                    Padding="30,55,30,80">
+
+                    <Border.StrokeShape>
+                        <PathGeometry Figures="M0,40 C90,5 250,0 450,45 L450,1000 L0,1000 Z"/>
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="18">
+
+                        <Label
+                            Text="¡Bienvenido!"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            TextColor="#6F0022"
+                            HorizontalTextAlignment="Center"/>
+
+                        <Label
+                            Text="Ingresa tus credenciales para continuar"
+                            FontSize="14"
+                            TextColor="#777"
+                            HorizontalTextAlignment="Center"
+                            Margin="0,0,0,15"/>
+
+                        <!-- Entrada Clave ISSEMYM -->
+                        <Border HeightRequest="55" Stroke="#DDDDDD" StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12"/>
+                            </Border.StrokeShape>
+                            <Entry
+                                x:Name="etClave"
+                                Placeholder="Clave ISSEMYM"
+                                PlaceholderColor="#999"
+                                TextColor="Black"
+                                Margin="18,0"
+                                FontSize="16"/>
+                        </Border>
+
+                        <!-- Entrada Contraseña -->
+                        <Border HeightRequest="55" Stroke="#DDDDDD" StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12"/>
+                            </Border.StrokeShape>
+                            <Entry
+                                x:Name="etPasword"
+                                Placeholder="Contraseña"
+                                IsPassword="True"
+                                PlaceholderColor="#999"
+                                TextColor="Black"
+                                Margin="18,0"
+                                FontSize="16"/>
+                        </Border>
+
+                        <!-- Botón de Iniciar Sesión -->
+                        <Button
+                            x:Name="btnIniciarsesion"
+                            Text="Iniciar Sesión"
+                            HeightRequest="58"
+                            CornerRadius="15"
+                            FontSize="17"
+                            FontAttributes="Bold"
+                            BackgroundColor="#7A0017"
+                            TextColor="White"
+                            Margin="0,15,0,0"
+                            IsEnabled="True"
+                            Clicked="btnIniciarsesion_Clicked">
+                            <Button.Shadow>
+                                <Shadow Radius="10" Offset="0,5" Opacity="0.20"/>
+                            </Button.Shadow>
+                        </Button>
+
+                        <!-- Olvidaste tu contraseña -->
+                        <Label
+                            Text="¿Olvidaste tu contraseña?"
+                            TextDecorations="Underline"
+                            TextColor="DodgerBlue"
+                            FontSize="14"
+                            HorizontalOptions="Center"
+                            Margin="0,10,0,0">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnForgotPasswordTapped"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </ScrollView>
+
+        <!-- Indicador de carga superpuesto -->
+        <ActivityIndicator 
+            x:Name="LoadingIndicator" 
+            IsRunning="False" 
+            Color="#7A0017"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            HeightRequest="50"
+            WidthRequest="50" />
     </Grid>
 </ContentPage>
