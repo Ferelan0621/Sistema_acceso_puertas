@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Shared.Models;assembly=Shared"
+    xmlns:converters="clr-namespace:Movil.Converters"
+    xmlns:viewmodels="clr-namespace:Movil.ViewModels"
+    x:Class="Movil.Pages.Inicio"
+    x:DataType="viewmodels:InicioViewModel"
+    x:Name="paginaInicio"
+    BackgroundColor="#F5F6FA">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:EstadoToColorConverterBase x:Key="ColorEstado"/>
+            <converters:EstadoToIconConverter x:Key="IconoEstado"/>
+            <converters:LabAceptadoMultiConverter x:Key="ColorAceptado"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid Padding="18" RowDefinitions="Auto,*" RowSpacing="20">
+
+        <!-- ================= ENCABEZADO ================= -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="15">
+
+            <Border WidthRequest="54" HeightRequest="54" BackgroundColor="White" StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16"/>
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow Radius="10" Offset="0,4" Opacity="0.08" Brush="Black"/>
+                </Border.Shadow>
+                <Label Text="UPT" FontSize="16" FontAttributes="Bold" TextColor="#7A0017" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Border>
+
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Label Text="BIENVENIDO" FontSize="11" CharacterSpacing="1.5" FontAttributes="Bold" TextColor="#8A8A8A"/>
+                    <Label Text="{Binding Username}" FontSize="12" FontAttributes="Bold" TextColor="#7A0017"/>
+                </HorizontalStackLayout>
+                <Label Text="Selecciona un Laboratorio" FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- ================= GRID DE LABORATORIOS ================= -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Laboratorios}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding LaboratorioSeleccionado,Mode=TwoWay}"
+                        SelectionChangedCommand="{Binding SeleccionarLaboratorioCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedItem,Source={RelativeSource Self}}">
+
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="14" VerticalItemSpacing="14"/>
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="local:Laboratorios">
+                    <Border HeightRequest="220" Margin="1" Stroke="#E4E4E4" StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
+                        <Border.Shadow>
+                            <Shadow Radius="6" Offset="0,3" Opacity="0.05" Brush="Black"/>
+                        </Border.Shadow>
+
+                        <Border.BackgroundColor>
+                            <MultiBinding Converter="{StaticResource ColorAceptado}">
+                                <Binding Path="ID"/>
+                                <Binding Path="BindingContext.LaboratorioAceptadoId" Source="{x:Reference paginaInicio}"/>
+                                <Binding Path="Estatus"/>
+                            </MultiBinding>
+                        </Border.BackgroundColor>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup Name="CommonStates">
+                                <VisualState Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Property="Stroke" Value="#E4E4E4"/>
+                                        <Setter Property="StrokeThickness" Value="1"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter Property="Stroke" Value="#7A0017"/>
+                                        <Setter Property="StrokeThickness" Value="2"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <!-- Estructura interna de 2 filas: Textos agrupados arriba e Imagen abajo -->
+                        <Grid Padding="12" RowDefinitions="Auto, *" RowSpacing="10">
+
+                            <!-- Fila 0: Bloque de Información Superior Completo -->
+                            <VerticalStackLayout Grid.Row="0" Spacing="4" VerticalOptions="Start">
+
+                                <!-- 1. Edificio -->
+                                <Label Text="{Binding Edificio, StringFormat='Edificio {0}'}"
+                                       FontSize="10"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="#7A0017"
+                                       Opacity="0.8"/>
+
+                                <!-- 2. Nombre de la Asignatura / Laboratorio -->
+                                <Label Text="{Binding NombreLaboratorio}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       TextColor="#1C1C1E"
+                                       MaxLines="2"
+                                       LineBreakMode="TailTruncation"/>
+
+                                <!-- 3. Cápsula del Estado (Justo debajo de la asignatura) -->
+                                <Border HorizontalOptions="Center"
+                                        BackgroundColor="{Binding Estatus, Converter={StaticResource ColorEstado}}"
+                                        Padding="10,3"
+                                        StrokeThickness="0"
+                                        Margin="0,2,0,0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+
+                                    <Label Text="{Binding Estatus}"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#1C1C1E"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Fila 1: Tu dibujo PNG en grande ocupando la base de la tarjeta -->
+                            <Image Grid.Row="1"
+                                   Source="{Binding Estatus, Converter={StaticResource IconoEstado}}"
+                                   HeightRequest="120"
+                                   WidthRequest="120"
+                                   Aspect="AspectFit" 
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   Margin="0,2,0,4"/>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -1,20 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Shared.Models
 {
-    public class Laboratorios
-    {
-        public int Id { get; set; }
-        public string Id_Serial { get; set; } = null!;
-        public string Nombre_Laboratorio { get; set; } = null!;
-        public int Edifico { get; set; }
-        public EstadoLaboratorio Estado { get; set; }
+	public partial class Laboratorios : ObservableObject
+	{
+		public int ID { get; set; }
 
-        // RELACIÓN: Un laboratorio tiene asignados muchos encargados
-        public ICollection<Encargados> Encargados { get; set; } = new List<Encargados>();
-        public ICollection<Peticiones> Peticiones { get; set; } = new List<Peticiones>();
+		[ObservableProperty]
+		[JsonPropertyName("direccionLora")]
+		private string _direccionLora;
 
+		[ObservableProperty]
+		[JsonPropertyName("nombrelaboratorio")]
+		private string _nombreLaboratorio;
+
+		[ObservableProperty]
+		[JsonPropertyName("edificio")]
+		private int _edificio;
+
+		[ObservableProperty]
+		[JsonPropertyName("estatus")]
+		private EstadoLaboratorio _estatus;
+
+		
+
+		[JsonIgnore]
+		public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
+	}
+
+	public partial class PuertaData : ObservableObject
+	{
+		[ObservableProperty]
+		private string _usuarioNombre;
+
+		[ObservableProperty]
+		private string _cargo;
+
+		[ObservableProperty]
+		private string _horaInicio;
+
+		[ObservableProperty]
+		private string _horaFinal;
+
+		[ObservableProperty]
+		private string _estadoPuerta;
+	}
+	public partial class DatosCambio : ObservableObject
+	{
+        // 🔑 DatosPuerta va aquí directamente en Laboratorios
+        [ObservableProperty]
+        [JsonPropertyName("datosPuerta")]
+        private PuertaData _datosPuerta = new PuertaData();
+
+        // 🔑 FIX 1: Si la API manda null en DatosPuerta, lo protegemos
+        partial void OnDatosPuertaChanged(PuertaData oldValue, PuertaData newValue)
+        {
+            if (newValue == null)
+                DatosPuerta = new PuertaData();
+        }
+
+        // 🔑 FIX 2: Exponemos OnPropertyChanged para forzar refresco desde el ViewModel
+        public new void OnPropertyChanged(string propertyName)
+            => base.OnPropertyChanged(propertyName);
     }
 }

@@ -23,7 +23,7 @@ namespace Api.Controllers
             //return await _context.Usuarios.ToListAsync();
             var usuarios = await _context.Usuarios
                 .Include(u => u.Rol) // Incluir el rol relacionado
-                .Include(u => u.Peticiones) // Incluir las peticiones relacionadas
+                .Include(u => u.Prestamos) // Incluir las peticiones relacionadas
                 .ToListAsync();
             return Ok (usuarios);
         }
@@ -34,7 +34,7 @@ namespace Api.Controllers
         {
             var Usuario = await _context.Usuarios
                 .Include(u => u.Rol) // Incluir el rol relacionado
-                .Include(u => u.Peticiones) // Incluir las peticiones relacionadas
+                .Include(u => u.Prestamos) // Incluir las peticiones relacionadas
                 .FirstOrDefaultAsync(u => u.Id == id);
 
 

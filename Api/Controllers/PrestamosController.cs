@@ -8,22 +8,22 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PeticionesController : ControllerBase
+    public class PrestamosController : ControllerBase
     {
 
         private readonly AppDbContext _context;
 
-        public PeticionesController(AppDbContext context)
+        public PrestamosController(AppDbContext context)
         {
             _context = context;
         }
 
         // 1. GET ALL: api/Peticiones
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Peticiones>>> GetPeticiones
+        public async Task<ActionResult<IEnumerable<Prestamos>>> GetPeticiones
             ()
         {
-            var lista = await _context.Peticiones
+            var lista = await _context.Prestamos
                 .Include(l => l.Laboratorios.Nombre_Laboratorio) // Incluir el laboratorio relacionado
                 .ToListAsync();
             return Ok(lista);
@@ -31,9 +31,9 @@ namespace Api.Controllers
 
         // 2. GET BY ID: api/Peticiones/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Peticiones>> GetPeticione(int id)
+        public async Task<ActionResult<Prestamos>> GetPeticione(int id)
         {
-            var Peticione = await _context.Peticiones.FindAsync(id);
+            var Peticione = await _context.Prestamos.FindAsync(id);
 
             if (Peticione == null)
             {
@@ -45,7 +45,7 @@ namespace Api.Controllers
 
         // 3. POST (Crear): api/Peticiones
         [HttpPost]
-        public async Task<ActionResult<Peticiones>> PostPeticione(Peticiones Peticione)
+        public async Task<ActionResult<Prestamos>> PostPeticione(Prestamos Peticione)
         {
             _context.Peticiones.Add(Peticione);
             await _context.SaveChangesAsync();
@@ -53,27 +53,10 @@ namespace Api.Controllers
             // Esto devuelve un estatus 201 Created y la ruta para consultar el objeto creado
             return CreatedAtAction(nameof(GetPeticione), new { id = Peticione.Id }, Peticione);
         }
-        [HttpPost("responder")]
-        public async Task<IActionResult> ResponderPeticion(Respuesta nuevaRespuesta)
-        {
-            // 1. Validar si la petición existe
-            var existePeticion = await _context.Peticiones.AnyAsync(p => p.Id == nuevaRespuesta.PeticionId);
-            if (!existePeticion) return NotFound("La petición original no existe.");
-
-            // 2. Validar si ya tiene una respuesta asignada (para respetar el 1 a 1)
-            var yaTieneRespuesta = await _context.Respuestas.AnyAsync(r => r.PeticionId == nuevaRespuesta.PeticionId);
-            if (yaTieneRespuesta) return BadRequest("Esta petición ya fue respondida anteriormente.");
-
-            // 3. Guardar la respuesta
-            _context.Respuestas.Add(nuevaRespuesta);
-            await _context.SaveChangesAsync();
-
-            return Ok("Respuesta registrada con éxito.");
-        }
-
+  
         // 4. PUT (Actualizar): api/Peticiones/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPeticione(int id, Peticiones Peticione)
+        public async Task<IActionResult> PutPeticione(int id, Prestamos Peticione)
         {
             if (id != Peticione.Id)
             {
