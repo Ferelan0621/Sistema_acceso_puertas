@@ -15,23 +15,28 @@
         <!--======================-->
         <!-- ENCABEZADO MODO CLARO -->
         <!--======================-->
-        <VerticalStackLayout Grid.Row="0" Spacing="2">
-            <Label Text="HISTORIAL" 
-                   FontSize="11" 
-                   TextColor="#8E8E93" 
-                   FontAttributes="Bold" 
-                   CharacterSpacing="1.5"/>
-            <Label Text="{Binding Titulo}" 
-                   FontSize="26" 
-                   FontAttributes="Bold" 
-                   TextColor="#1C1C1E" />
-            <!-- Línea decorativa guinda debajo del título -->
-            <BoxView Color="#7A0017" 
-                     WidthRequest="40" 
-                     HeightRequest="3" 
-                     HorizontalOptions="Start" 
-                     Margin="0,6,0,0"/>
-        </VerticalStackLayout>
+
+        <!-- ================= ENCABEZADO ================= -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="15">
+
+            <Border WidthRequest="54" HeightRequest="54" BackgroundColor="White" StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16"/>
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow Radius="10" Offset="0,4" Opacity="0.08" Brush="Black"/>
+                </Border.Shadow>
+                <Label Text="UPT" FontSize="16" FontAttributes="Bold" TextColor="#7A0017" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Border>
+
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Label Text="{Binding Titulo}" FontSize="11" CharacterSpacing="1.5" FontAttributes="Bold" TextColor="#8A8A8A"/>
+                </HorizontalStackLayout>
+                <Label Text="Historial" FontSize="22" FontAttributes="Bold" TextColor="#1C1C1E"/>
+            </VerticalStackLayout>
+        </Grid>
+
 
         <!--======================-->
         <!-- LISTA DE PRÉSTAMOS   -->

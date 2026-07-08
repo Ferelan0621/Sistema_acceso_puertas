@@ -22,32 +22,40 @@ public partial class Inicio : ContentPage
     {
         base.OnAppearing();
 
-        // 1. Iniciamos la escucha SSE inmediatamente
-        _viewModel.IniciarEscuchaSSE();
+        // 1. Pausa estratégica inicial: permite al Shell completar la transición visual de pestañas al 100%
+        await Task.Delay(150);
 
-        // 2. Pequeña pausa para que la pestaña se acomode visualmente sin tirones
-        await Task.Delay(100);
-
-        // 3. Carga pesada en un hilo secundario
+        // 2. Ejecución asíncrona del comando de carga de laboratorios
         if (_viewModel.CargarLaboratoriosCommand.CanExecute(null))
         {
-            await Task.Run(() =>
+            try
             {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    _viewModel.CargarLaboratoriosCommand.Execute(null);
-                });
-            });
+                // Se ejecuta directo para que el framework maneje el encolado de forma óptima
+                _viewModel.CargarLaboratoriosCommand.Execute(null);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al ejecutar CargarLaboratoriosCommand: {ex.Message}");
+            }
+        }
+
+        // 3. Encendemos la escucha en tiempo real (SSE) una vez que la pantalla ya está pintada con los datos base
+        try
+        {
+            _viewModel.IniciarEscuchaSSE();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error al iniciar SSE: {ex.Message}");
         }
     }
 
-    protected override async void OnDisappearing()
+    protected override void OnDisappearing()
     {
         base.OnDisappearing();
 
-        // 🔥 LA SOLUCIÓN AL RETRASO:
-        // Enviamos el cierre de conexiones y limpieza a otro hilo.
-        // Al no esperarlo con 'await' aquí, la pestaña cambia EN EL ACTO.
+        // 🔥 Tu solución 'fire-and-forget': Desconexión y limpieza en un hilo secundario
+        // Al no esperarlo en el hilo principal de la UI, el cambio a otra pestaña es instantáneo.
         _ = Task.Run(() =>
         {
             try
@@ -57,7 +65,7 @@ public partial class Inicio : ContentPage
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error al limpiar: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error al limpiar recursos en OnDisappearing: {ex.Message}");
             }
         });
     }
