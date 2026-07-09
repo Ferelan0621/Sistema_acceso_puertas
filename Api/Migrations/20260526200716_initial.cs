@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,11 +35,44 @@ namespace Api.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Clave_ISSEMYM = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Rol = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Usuarios", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Prestamos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Usuario_Id = table.Column<int>(type: "int", nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    Laboratodio_Id = table.Column<int>(type: "int", nullable: false),
+                    LaboratoriosId = table.Column<int>(type: "int", nullable: false),
+                    Fecha_Prestamo = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Hora_Inicio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Hora_Final = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Abierto = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Prestamos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Prestamos_Laboratorios_LaboratoriosId",
+                        column: x => x.LaboratoriosId,
+                        principalTable: "Laboratorios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Prestamos_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -52,80 +85,34 @@ namespace Api.Migrations
                     password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
                     Rol = table.Column<int>(type: "int", nullable: false),
-                    LaboratorioId = table.Column<int>(type: "int", nullable: false)
+                    PrestamoId = table.Column<int>(type: "int", nullable: false),
+                    PrestamosId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Encargados", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Encargados_Laboratorios_LaboratorioId",
-                        column: x => x.LaboratorioId,
-                        principalTable: "Laboratorios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Peticiones",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Usuario_Id = table.Column<int>(type: "int", nullable: false),
-                    UsuarioId = table.Column<int>(type: "int", nullable: false),
-                    Respuesta_Id = table.Column<int>(type: "int", nullable: false),
-                    Fecha_Peticion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Hora_Inicio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Hora_Final = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Abierto = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Peticiones", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Peticiones_Usuarios_UsuarioId",
-                        column: x => x.UsuarioId,
-                        principalTable: "Usuarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Respuestas",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Aceptada = table.Column<bool>(type: "bit", nullable: false),
-                    Nombre_Laboratorio = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PeticionId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Respuestas", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Respuestas_Peticiones_PeticionId",
-                        column: x => x.PeticionId,
-                        principalTable: "Peticiones",
+                        name: "FK_Encargados_Prestamos_PrestamosId",
+                        column: x => x.PrestamosId,
+                        principalTable: "Prestamos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Encargados_LaboratorioId",
+                name: "IX_Encargados_PrestamosId",
                 table: "Encargados",
-                column: "LaboratorioId");
+                column: "PrestamosId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Peticiones_UsuarioId",
-                table: "Peticiones",
+                name: "IX_Prestamos_LaboratoriosId",
+                table: "Prestamos",
+                column: "LaboratoriosId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Prestamos_UsuarioId",
+                table: "Prestamos",
                 column: "UsuarioId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Respuestas_PeticionId",
-                table: "Respuestas",
-                column: "PeticionId",
-                unique: true);
         }
 
         /// <inheritdoc />
@@ -135,13 +122,10 @@ namespace Api.Migrations
                 name: "Encargados");
 
             migrationBuilder.DropTable(
-                name: "Respuestas");
+                name: "Prestamos");
 
             migrationBuilder.DropTable(
                 name: "Laboratorios");
-
-            migrationBuilder.DropTable(
-                name: "Peticiones");
 
             migrationBuilder.DropTable(
                 name: "Usuarios");

@@ -1,19 +1,18 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Shared.Models
 {
-    public class Encargados
+    public partial class Encargados : ObservableObject
     {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = null!;
-        public string password { get; set; } = null!;
-        public bool Activo { get; set; }
-        public Rol Rol { get; set; } = Rol.Administrador;
+        public int ID { get; set; }
 
-        // VÍNCULO: ID del laboratorio al que pertenece este encargado
-        public int LaboratorioId { get; set; }
-        public Laboratorios Laboratorio { get; set; } = null!;
+        public string Nombre { get; set; } = null!;
+        public string Password { get; set; } = null!;
+        public required string Estatus { get; set; }
+
+
     }
 }

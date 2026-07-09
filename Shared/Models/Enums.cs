@@ -5,21 +5,22 @@ using System.Text.Json.Serialization;
 
 namespace Shared.Models
 {
-    
+
     public enum EstadoLaboratorio
     {
-        Disponible,
-        Ocupado,
-        Mantenimiento,
-        Limpieza
+        Disponible = 0,
+        Ocupado = 1,
+        Mantenimiento = 2,
+        Limpieza = 3
     }
 
     public enum Rol
     {
-        Administrador,
-        Administrativo,
-        Docente,
-        Mantenimiento,
-        Intendencia
+       
+        Administrativo = 1,
+        Docente = 2,
+        Mantenimiento = 3,
+        Intendencia = 4
     }
+
 }

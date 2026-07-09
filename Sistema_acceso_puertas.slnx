@@ -1,8 +1,7 @@
 <Solution>
-  <Project Path="Api/Api.csproj" />
   <Project Path="Escritorio/Escritorio.csproj" />
   <Project Path="Movil/Movil.csproj">
     <Deploy Solution="Debug|*" />
   </Project>
-  <Project Path="Shared/Shared.csproj" />
+  <Project Path="Shared/Shared.csproj" Id="a5b2c166-9dcd-4ad1-a21c-182b54804a7e" />
 </Solution>

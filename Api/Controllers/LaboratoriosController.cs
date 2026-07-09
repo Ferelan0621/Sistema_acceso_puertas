@@ -22,8 +22,7 @@ namespace Api.Controllers
         public async Task<ActionResult<IEnumerable<Laboratorios>>> GetLaboratorios()
         {
             var lista = await _context.Laboratorios
-                .Include(l => l.Encargados) // Incluir encargados relacionados
-                .Include(l => l.Peticiones)  // Incluir peticiones relacionadas
+                .Include(l => l.Prestamos)  // Incluir peticiones relacionadas
                 .ToListAsync();
             return Ok(lista);
             //return await _context.Laboratorios.ToListAsync();
@@ -34,8 +33,7 @@ namespace Api.Controllers
         public async Task<ActionResult<Laboratorios>> GetLaboratorio(int id)
         {
             var lista = await _context.Laboratorios
-                .Include(l => l.Encargados) // Incluir encargados relacionados
-                .Include(l => l.Peticiones)  // Incluir peticiones relacionadas
+                .Include(l => l.Prestamos)  // Incluir peticiones relacionadas
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             if (lista == null)
