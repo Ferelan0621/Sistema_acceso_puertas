@@ -79,7 +79,6 @@ namespace Escritorio.Data
 			}
 		}
 
-		// 🔑 NUEVO: Obtiene un usuario por su ID desde api/Usuarios/{id}
 		public async Task<Usuarios> ObtenerUsuarioPorIdAsync(int id)
 		{
 			try
@@ -91,7 +90,6 @@ namespace Escritorio.Data
 
 				var respuesta = await _httpClient.GetAsync($"Usuarios/{id}");
 
-				// Si no existe el usuario, regresa null sin tronar
 				if (!respuesta.IsSuccessStatusCode)
 				{
 					System.Diagnostics.Debug.WriteLine($"[API] Usuario {id} no encontrado. Status: {respuesta.StatusCode}");
@@ -99,8 +97,6 @@ namespace Escritorio.Data
 				}
 
 				var contenido = await respuesta.Content.ReadAsStringAsync();
-				System.Diagnostics.Debug.WriteLine($"[API] Usuario recibido: {contenido}");
-
 				var usuario = JsonSerializer.Deserialize<Usuarios>(contenido, opcionesJson);
 				return usuario;
 			}
@@ -108,6 +104,82 @@ namespace Escritorio.Data
 			{
 				System.Diagnostics.Debug.WriteLine($"[API] Error obteniendo usuario {id}: {ex.Message}");
 				return null;
+			}
+		}
+
+		// 🔑 NUEVO: Guarda un nuevo préstamo en BD
+		public async Task<Prestamos> GuardarPrestamoAsync(Prestamos prestamo)
+		{
+			try
+			{
+				var respuesta = await _httpClient.PostAsJsonAsync("Prestamos", prestamo);
+				respuesta.EnsureSuccessStatusCode();
+
+				var contenido = await respuesta.Content.ReadAsStringAsync();
+				var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+				var guardado = JsonSerializer.Deserialize<Prestamos>(contenido, opcionesJson);
+
+				System.Diagnostics.Debug.WriteLine($"[API] Préstamo guardado con ID: {guardado?.ID}");
+				return guardado;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[API] Error guardando préstamo: {ex.Message}");
+				return null;
+			}
+		}
+
+		public async Task<bool> ActualizarLaboratorioAsync(Laboratorios laboratorio)
+		{
+			try
+			{
+				// Agregar debug para ver qué se manda
+				string jsonDebug = JsonSerializer.Serialize(laboratorio);
+				System.Diagnostics.Debug.WriteLine($"[API] PUT Laboratorios/{laboratorio.ID} → {jsonDebug}");
+
+				var respuesta = await _httpClient.PutAsJsonAsync("Laboratorios/" + laboratorio.ID, laboratorio);
+
+				System.Diagnostics.Debug.WriteLine($"[API] Respuesta: {respuesta.StatusCode}");
+
+				respuesta.EnsureSuccessStatusCode();
+				return true;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[API] Error: {ex.Message}");
+				return false;
+			}
+		}
+
+		// 🔑 NUEVO: Actualiza la fecha de cierre de un préstamo
+		public async Task<bool> CerrarPrestamoAsync(int id, DateTime fechaCierre)
+		{
+			try
+			{
+				// Primero obtenemos el préstamo actual
+				var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+				var respuestaGet = await _httpClient.GetAsync($"Prestamos/{id}");
+				respuestaGet.EnsureSuccessStatusCode();
+
+				var contenido = await respuestaGet.Content.ReadAsStringAsync();
+				var prestamo = JsonSerializer.Deserialize<Prestamos>(contenido, opcionesJson);
+
+				if (prestamo == null) return false;
+
+				// Actualizamos las fechas de cierre
+				prestamo.FechaCierre = fechaCierre;
+				prestamo.FechaCierreRemoto = fechaCierre;
+
+				var respuestaPut = await _httpClient.PutAsJsonAsync($"Prestamos/{id}", prestamo);
+				respuestaPut.EnsureSuccessStatusCode();
+
+				System.Diagnostics.Debug.WriteLine($"[API] Préstamo {id} cerrado correctamente");
+				return true;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[API] Error cerrando préstamo: {ex.Message}");
+				return false;
 			}
 		}
 
@@ -180,6 +252,7 @@ namespace Escritorio.Data
 				Console.WriteLine($"Error en la API cargando historial: {ex.Message}");
 				return new List<Prestamos>();
 			}
+
 		}
 	}
 }

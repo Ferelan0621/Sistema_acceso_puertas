@@ -24,8 +24,8 @@ namespace Escritorio.Windows
     
         private void btnImagenregresar_Click(object sender, RoutedEventArgs e)
         {
-            PeticionesWindow ventanaPeticiones = new PeticionesWindow();
-            ventanaPeticiones.Show();
+            LaboratorioWindow ventanaLabs = new LaboratorioWindow();
+            ventanaLabs.Show();
             this.Close();
         }
     }

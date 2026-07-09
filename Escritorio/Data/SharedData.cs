@@ -1,23 +1,23 @@
-﻿using System.Collections.ObjectModel;
+﻿using System; // Necesario para Lazy<T>
+using System.Collections.ObjectModel;
 using Shared.Models;
-using Escritorio.Data;
 
 namespace Escritorio.Data
 {
 	public class SharedData
 	{
-		// Instancia única global (Singleton)
-		public static SharedData Instance { get; } = new SharedData();
+		private static SharedData _instance;
+		public static SharedData Instance => _instance ??= new SharedData();
 
-		// Propiedades globales para el MQTT y la lista de laboratorios
-		public EscritorioMQTT Broker { get; }
-		public ObservableCollection<Laboratorios> ListaLaboratorios { get; }
+		public EscritorioMQTT Broker { get; } = new EscritorioMQTT();
+		public ObservableCollection<Laboratorios> ListaLaboratorios { get; } = new ObservableCollection<Laboratorios>();
 
-		private SharedData()
-		{
-			// Al estar en la misma carpeta Data, encuentra EscritorioMQTT automáticamente
-			Broker = new EscritorioMQTT();
-			ListaLaboratorios = new ObservableCollection<Laboratorios>();
-		}
+		// Usamos Lazy para evitar la referencia circular en el constructor
+		private readonly Lazy<ViewModel.PeticionesViewModel> _peticionesVM =
+			new Lazy<ViewModel.PeticionesViewModel>(() => new ViewModel.PeticionesViewModel());
+
+		public ViewModel.PeticionesViewModel PeticionesVM => _peticionesVM.Value;
+
+		private SharedData() { }
 	}
 }

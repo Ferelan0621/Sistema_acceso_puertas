@@ -139,9 +139,36 @@ namespace Escritorio.Mvvm
 		[RelayCommand]
 		private async Task AbrirLabAsync(Laboratorios labSeleccionado)
 		{
-			if (labSeleccionado == null) return;
-			string json = JsonSerializer.Serialize(new { d = labSeleccionado.ID.ToString(), c = "abrir" });
-			await _miBroker.PublicarMensajeAsync(MqttServices.abrir, json);
+			if (labSeleccionado is null) return;
+
+			var estadoAnterior = labSeleccionado.Estatus;
+			var datosAnteriores = labSeleccionado.DatosPuerta; // por si hay que revertir
+
+			labSeleccionado.Estatus = EstadoLaboratorio.Disponible;
+			labSeleccionado.DatosPuerta = new PuertaData(); // limpia Usuario, Cargo, Inicio, Final
+
+			bool exito;
+			try
+			{
+				exito = await _apiService.ActualizarLaboratorioAsync(labSeleccionado);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[ABRIR LAB] ❌ Error: {ex.Message}");
+				labSeleccionado.Estatus = estadoAnterior;
+				labSeleccionado.DatosPuerta = datosAnteriores;
+				return;
+			}
+
+			if (!exito)
+			{
+				labSeleccionado.Estatus = estadoAnterior;
+				labSeleccionado.DatosPuerta = datosAnteriores;
+				return;
+			}
+
+			string jsonMqtt = JsonSerializer.Serialize(new { d = labSeleccionado.ID.ToString(), c = "abrir" });
+			await _miBroker.PublicarMensajeAsync(MqttServices.abrir, jsonMqtt);
 		}
 
 		public void DesconectarSSE() => _sseCancellationTokenSource?.Cancel();

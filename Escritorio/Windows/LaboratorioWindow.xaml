@@ -5,63 +5,62 @@
         xmlns:vm="clr-namespace:Escritorio.Mvvm"
         Title="Laboratorios" Height="600" Width="900">
 
-    <Window.DataContext>
-        <vm:LaboratorioViewModel/>
-    </Window.DataContext>
+	<Window.DataContext>
+		<vm:LaboratorioViewModel/>
+	</Window.DataContext>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+	<Grid Background="#F5F6FA">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
 
-        <Button x:Name="btnImagenregresar" Grid.Row="0" HorizontalAlignment="Left" Margin="20,20,0,10" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <ContentPresenter />
-                </ControlTemplate>
-            </Button.Template>
-            <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
-        </Button>
+		<Button x:Name="btnImagenregresar" Grid.Row="0" HorizontalAlignment="Left" Margin="20,20,0,10" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
+			<Button.Template>
+				<ControlTemplate TargetType="Button">
+					<ContentPresenter />
+				</ControlTemplate>
+			</Button.Template>
+			<Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
+		</Button>
 
-        <Ellipse Grid.Row="0" Width="15" Height="15" Fill="{Binding StatusColor}" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
-        <TextBlock Grid.Row="0" Text="{Binding StatusMensaje}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
+		<Ellipse Grid.Row="0" Width="15" Height="15" Fill="{Binding StatusColor}" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
+		<TextBlock Grid.Row="0" Text="{Binding StatusMensaje}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
-            <ItemsControl ItemsSource="{Binding ListaLaboratorios}">
+		<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
+			<ItemsControl ItemsSource="{Binding ListaLaboratorios}">
 
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
 
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:Laboratorios}">
-                        <Border Background="#FFDADADA" CornerRadius="10" Margin="15" Width="180" Height="260">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
-                            </Border.Effect>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate DataType="{x:Type models:Laboratorios}">
+						<Border Background="#FFDADADA" CornerRadius="10" Margin="15" Width="180" Height="260">
+							<Border.Effect>
+								<DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+							</Border.Effect>
 
-                            <Grid>
-                                <Label Content="{Binding NombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
+							<Grid>
+								<Label Content="{Binding NombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
 
-                                
+								<Image Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
+									<Image.Style>
+										<Style TargetType="Image">
+											<Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding DatosPuerta.EstadoPuerta}" Value="Abierto">
+													<Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Image.Style>
+								</Image>
 
-                                <Image Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
-                                    <Image.Style>
-                                        <Style TargetType="Image">
-                                            <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding DatosPuerta.EstadoPuerta}" Value="Abierto">
-                                                    <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
-                                </Image>
-
-                                <Label Content="{Binding DireccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
+								<Label Content="{Binding DireccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
 
 								<StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,135,0,0" VerticalAlignment="Top">
 									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -86,12 +85,18 @@
 								<Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Cursor="Hand"
             Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
             CommandParameter="{Binding}"/>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
 
-            </ItemsControl>
-        </ScrollViewer>
-    </Grid>
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+
+			</ItemsControl>
+		</ScrollViewer>
+
+		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,10,20,20">
+			<Button x:Name="btnHistorialpeticiones" Content="Ver Historial de Peticiones" Background="#0097E6" Foreground="White" FontWeight="SemiBold" Padding="15,8" Cursor="Hand" BorderThickness="0" Click="btnHistorialpeticiones_Click"/>
+		</StackPanel>
+	</Grid>
+
 </Window>

@@ -112,8 +112,8 @@ namespace Escritorio
                 // Por si el servidor está apagado o el Dev Tunnel expiró
                 MessageBox.Show($"¡El servidor no responde! ¿Encendiste la API? Error: {ex.Message}", "Fallo de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
             }*/
-            InicioWindow ventaInicio = new InicioWindow();
-            ventaInicio.Show();
+            LaboratorioWindow ventanaLabs = new LaboratorioWindow();
+            ventanaLabs.Show();
             this.Hide();
         }
         

@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Escritorio.Data;
+using Escritorio.Windows;
 using Shared.Models;
 using Shared.Services;
 
@@ -12,6 +16,7 @@ namespace Escritorio.ViewModel
 {
 	public partial class PeticionesViewModel : ObservableObject
 	{
+		private bool _mqttIniciado = false; // <-- VARIABLE DE CONTROL
 		private readonly EscritorioMQTT _miBroker = SharedData.Instance.Broker;
 		private readonly ApiService _apiService = new ApiService();
 
@@ -21,23 +26,28 @@ namespace Escritorio.ViewModel
 		public PeticionesViewModel()
 		{
 			ListaPeticiones = new ObservableCollection<PeticionMovil>();
+			// Ya no llamamos a InicializarMQTT() aquí si quieres control total
+		}
+
+		public async Task IniciarTodo()
+		{
+			if (_mqttIniciado) return; // Si ya corrió, no hagas nada
+
 			InicializarMQTT();
+			_mqttIniciado = true;
 		}
 
 		private async void InicializarMQTT()
 		{
-			// 🔍 LOG 1: ¿Se engancha el evento?
 			_miBroker.MensajeRecibido += MqttClient_MensajeRecibido;
-			System.Diagnostics.Debug.WriteLine("[PETICIONES] Evento MensajeRecibido enganchado.");
-
 			try
 			{
 				await _miBroker.ConectarAsync();
-
-				// 🔍 LOG 2: ¿Cuál es el tópico exacto al que nos suscribimos?
-				System.Diagnostics.Debug.WriteLine($"[PETICIONES] Suscribiéndose a tópico: '{MqttServices.conexion}'");
 				await _miBroker.SuscribirseAsync(MqttServices.conexion);
-				System.Diagnostics.Debug.WriteLine("[PETICIONES] Suscripción exitosa.");
+				await _miBroker.SuscribirseAsync(MqttServices.cerrado);
+				await _miBroker.SuscribirseAsync(MqttServices.conexion); // <-- AGREGADO
+
+				System.Diagnostics.Debug.WriteLine($"[PETICIONES] Suscrito a: {MqttServices.conexion}, {MqttServices.cerrado} y {MqttServices.peticion}");
 			}
 			catch (Exception ex)
 			{
@@ -48,38 +58,50 @@ namespace Escritorio.ViewModel
 
 		private void MqttClient_MensajeRecibido(string topic, string payload)
 		{
-			// 🔍 LOG 3: ¿Llega CUALQUIER mensaje MQTT?
-			System.Diagnostics.Debug.WriteLine($"[PETICIONES] Mensaje recibido - Topic: '{topic}' | Payload: '{payload}'");
+			System.Diagnostics.Debug.WriteLine($"[PETICIONES] Topic: '{topic}' | Payload: '{payload}'");
 
 			Application.Current.Dispatcher.Invoke(() =>
 			{
 				try
 				{
-					// 🔍 LOG 4: ¿El tópico coincide con MqttServices.conexion?
-					System.Diagnostics.Debug.WriteLine($"[PETICIONES] Comparando topic '{topic}' con MqttServices.conexion '{MqttServices.conexion}'");
+					var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-					if (topic == MqttServices.conexion)
+					// 1. Petición de cierre remoto directo
+					if (topic == MqttServices.cerrado)
 					{
-						System.Diagnostics.Debug.WriteLine("[PETICIONES] ✅ Tópico coincide. Deserializando...");
+						System.Diagnostics.Debug.WriteLine("[CIERRE REMOTO] Mensaje recibido");
+						var cierreRemoto = JsonSerializer.Deserialize<Prestamos>(payload, opcionesJson);
 
-						var opcionesJson = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+						if (cierreRemoto != null)
+						{
+							var resultado = MessageBox.Show(
+								$"Petición de cierre recibida.\nUsuario: {cierreRemoto.UsuarioID}\nLaboratorio: {cierreRemoto.LaboratorioID}\n\n¿Cerrar el laboratorio?",
+								"Cierre de Laboratorio",
+								MessageBoxButton.YesNo,
+								MessageBoxImage.Question);
+
+							if (resultado == MessageBoxResult.Yes)
+								_ = ProcesarCierreRemotoAsync(cierreRemoto.UsuarioID, cierreRemoto.LaboratorioID, cierreRemoto.FechaCierreRemoto);
+						}
+					}
+					// 2. Petición de acceso o cierre por estatus desde la app móvil
+					else if (topic == MqttServices.conexion) // <-- CORREGIDO A PETICION
+					{
 						var nuevaPeticion = JsonSerializer.Deserialize<PeticionMovil>(payload, opcionesJson);
 
 						if (nuevaPeticion != null)
 						{
-							System.Diagnostics.Debug.WriteLine($"[PETICIONES] ✅ Petición - UsuarioID: {nuevaPeticion.UsuarioID}, LaboratorioID: {nuevaPeticion.LaboratorioID}, Estatus: {nuevaPeticion.Estatus}");
+							System.Diagnostics.Debug.WriteLine($"[PETICIONES] Estatus: {nuevaPeticion.Estatus}");
 
-							// 🔑 Petición de CIERRE
 							if (!string.IsNullOrEmpty(nuevaPeticion.Estatus) && nuevaPeticion.Estatus.ToLower() == "cierre")
 							{
-								System.Diagnostics.Debug.WriteLine("[PETICIONES] 🔒 Petición de cierre recibida");
-								_ = ResponderCierreAsync(nuevaPeticion);
+								System.Diagnostics.Debug.WriteLine("[PETICIONES] Peticion de cierre recibida");
+								_ = ProcesarCierreAsync(nuevaPeticion);
 							}
-							// 🔑 Petición de ACCESO normal
 							else
 							{
 								ListaPeticiones.Add(nuevaPeticion);
-								System.Diagnostics.Debug.WriteLine($"[PETICIONES] ✅ Agregada a lista. Total: {ListaPeticiones.Count}");
+								System.Diagnostics.Debug.WriteLine($"[PETICIONES] Peticion agregada. Total: {ListaPeticiones.Count}");
 
 								var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == nuevaPeticion.LaboratorioID);
 								if (lab != null)
@@ -89,73 +111,148 @@ namespace Escritorio.ViewModel
 									lab.DatosPuerta.HoraInicio = nuevaPeticion.FechaPrestamo;
 									lab.OnPropertyChanged(nameof(lab.DatosPuerta));
 								}
+
+								var vm = new PeticionDialogoViewModel(nuevaPeticion, this);
+
+								var ventana = new PeticionDialogoWindow
+								{
+									DataContext = vm,
+									WindowStartupLocation = WindowStartupLocation.CenterScreen,
+									Topmost = true
+								};
+
+								ventana.Show();
 							}
 						}
-						else
-						{
-							System.Diagnostics.Debug.WriteLine("[PETICIONES] ❌ Petición deserializada como null");
-						}
-					}
-					else
-					{
-						System.Diagnostics.Debug.WriteLine($"[PETICIONES] ⚠️ Tópico NO coincide, ignorando.");
 					}
 				}
 				catch (Exception ex)
 				{
-					System.Diagnostics.Debug.WriteLine($"[PETICIONES] ❌ Error: {ex.Message}");
+					System.Diagnostics.Debug.WriteLine($"[PETICIONES] Error: {ex.Message}");
 				}
 			});
 		}
 
-		// 🔑 Responde la petición de cierre de la app móvil
-		private async Task ResponderCierreAsync(PeticionMovil peticion)
+		private async Task<Prestamos> BuscarPrestamoActivoAsync(int laboratorioID)
+		{
+			var historial = await _apiService.ObtenerHistorialPrestamosAsync();
+			return historial?
+				.Where(p => p.LaboratorioID == laboratorioID
+					&& p.FechaCierre == default(DateTime)
+					&& p.FechaCierreRemoto == default(DateTime))
+				.OrderByDescending(p => p.FechaSolicitud)
+				.FirstOrDefault();
+		}
+
+		private async Task ProcesarCierreRemotoAsync(int usuarioID, int laboratorioID, DateTime fechaCierreRemoto)
 		{
 			try
 			{
+				var prestamo = await BuscarPrestamoActivoAsync(laboratorioID);
+				if (prestamo != null)
+				{
+					await _apiService.CerrarPrestamoAsync(prestamo.ID, fechaCierreRemoto);
+					System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] Prestamo {prestamo.ID} cerrado en BD");
+				}
+				else
+				{
+					System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] No se encontro prestamo activo para Lab {laboratorioID}");
+				}
+
+				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == laboratorioID);
+				if (lab != null)
+				{
+					lab.Estatus = EstadoLaboratorio.Disponible;
+					var exito = await _apiService.ActualizarLaboratorioAsync(lab);
+					System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] Lab actualizado a Disponible: {exito}");
+				}
+				else
+				{
+					System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] ⚠️ Lab {laboratorioID} no encontrado en lista");
+				}
+
 				var cierrePayload = new
 				{
-					estatus = "cierre",
+					estatus = "cerrado",
+					iddellaboratorio = laboratorioID,
+					mensaje = "Laboratorio cerrado remotamente desde escritorio"
+				};
+
+				string jsonCierre = JsonSerializer.Serialize(cierrePayload);
+				string topicoDestino = $"{MqttServices.respuesta}/{usuarioID}";
+
+				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonCierre);
+				System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] Aviso enviado a {topicoDestino}");
+
+				await ActualizarCardsDesdeHistorialAsync();
+				System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] Card actualizada para Lab {laboratorioID}");
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[CIERRE REMOTO] Error: {ex.Message}");
+			}
+		}
+
+		private async Task ProcesarCierreAsync(PeticionMovil peticion)
+		{
+			try
+			{
+				var prestamo = await BuscarPrestamoActivoAsync(peticion.LaboratorioID);
+				if (prestamo != null)
+				{
+					await _apiService.CerrarPrestamoAsync(prestamo.ID, DateTime.Now);
+					System.Diagnostics.Debug.WriteLine($"[CIERRE] Prestamo {prestamo.ID} cerrado en BD");
+				}
+
+				var cierrePayload = new
+				{
+					estatus = "cerrado",
 					laboratorioID = peticion.LaboratorioID,
 					mensaje = "Laboratorio cerrado correctamente"
 				};
 
 				string jsonCierre = JsonSerializer.Serialize(cierrePayload);
 				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
-
 				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonCierre);
-				System.Diagnostics.Debug.WriteLine($"[CIERRE] ✅ Respuesta de cierre enviada a {topicoDestino}");
 
-				// Limpiar la card del laboratorio
-				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
-				if (lab != null)
-				{
-					Application.Current.Dispatcher.Invoke(() =>
-					{
-						lab.DatosPuerta.UsuarioNombre = string.Empty;
-						lab.DatosPuerta.Cargo = string.Empty;
-						lab.DatosPuerta.HoraInicio = string.Empty;
-						lab.DatosPuerta.EstadoPuerta = "Cerrado";
-						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-					});
-				}
+				await ActualizarCardsDesdeHistorialAsync();
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"[CIERRE] ❌ Error: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"[CIERRE] Error: {ex.Message}");
 			}
 		}
 
 		[RelayCommand]
 		private async void AceptarPeticion(PeticionMovil peticion)
 		{
-			if (peticion == null) return;
 			try
 			{
 				var usuario = await _apiService.ObtenerUsuarioPorIdAsync(peticion.UsuarioID);
-
-				// 🔑 Buscamos el laboratorio para incluir sus datos en la respuesta
 				var lab = ListaLaboratorios.FirstOrDefault(l => l.ID == peticion.LaboratorioID);
+
+				System.Diagnostics.Debug.WriteLine($"[ACEPTAR] Buscando lab ID: {peticion.LaboratorioID}");
+				System.Diagnostics.Debug.WriteLine($"[ACEPTAR] Lab encontrado: {(lab != null ? lab.ID.ToString() : "NULL")}");
+
+				if (lab != null)
+				{
+					lab.Estatus = EstadoLaboratorio.Ocupado;
+					var exito = await _apiService.ActualizarLaboratorioAsync(lab);
+					System.Diagnostics.Debug.WriteLine($"[ACEPTAR] Lab actualizado en BD: {exito}");
+
+					if (!exito) throw new Exception("No se pudo actualizar el laboratorio.");
+				}
+
+				var nuevoPrestamo = new Prestamos
+				{
+					UsuarioID = peticion.UsuarioID,
+					LaboratorioID = peticion.LaboratorioID,
+					FechaSolicitud = DateTime.Now,
+					FechaApertura = DateTime.Now,
+					EncargadoID = 1
+				};
+				var prestamoGuardado = await _apiService.GuardarPrestamoAsync(nuevoPrestamo);
+				System.Diagnostics.Debug.WriteLine($"[ACEPTAR] Prestamo guardado ID: {prestamoGuardado?.ID}");
 
 				var respuestaPayload = new
 				{
@@ -166,7 +263,6 @@ namespace Escritorio.ViewModel
 					direccionLora = lab?.DireccionLora ?? string.Empty,
 					mensaje = "Acceso concedido"
 				};
-
 				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
 				string topicoDestino = $"{MqttServices.respuesta}/{peticion.UsuarioID}";
 				await _miBroker.PublicarMensajeAsync(topicoDestino, jsonRespuesta);
@@ -174,24 +270,14 @@ namespace Escritorio.ViewModel
 				string jsonAbrir = JsonSerializer.Serialize(new { d = peticion.LaboratorioID.ToString(), c = "abrir" });
 				await _miBroker.PublicarMensajeAsync(MqttServices.abrir, jsonAbrir);
 
-				// Actualizamos la card con los datos del usuario
-				if (lab != null)
-				{
-					Application.Current.Dispatcher.Invoke(() =>
-					{
-						lab.DatosPuerta.UsuarioNombre = usuario?.Nombre ?? $"Usuario #{peticion.UsuarioID}";
-						lab.DatosPuerta.Cargo = usuario != null ? usuario.Rol.ToString() : "Sin asignar";
-						lab.DatosPuerta.EstadoPuerta = "Abierto";
-						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-					});
-				}
+				await ActualizarCardsDesdeHistorialAsync();
 
-				MessageBox.Show($"Has ACEPTADO el acceso al Lab {peticion.LaboratorioID} para {usuario?.Nombre ?? "Usuario #" + peticion.UsuarioID}", "Aprobado");
+				MessageBox.Show($"Acceso ACEPTADO al Lab {peticion.LaboratorioID} para {usuario?.Nombre ?? "Usuario #" + peticion.UsuarioID}", "Aprobado");
 				ListaPeticiones.Remove(peticion);
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
+				MessageBox.Show($"Error al aceptar peticion: {ex.Message}");
 			}
 		}
 
@@ -204,9 +290,8 @@ namespace Escritorio.ViewModel
 				var respuestaPayload = new
 				{
 					estatus = "denegado",
-					usuarioID = peticion.UsuarioID,
 					laboratorioID = peticion.LaboratorioID,
-					mensaje = $"No se autorizó tu acceso al Laboratorio {peticion.LaboratorioID}."
+					mensaje = "Acceso denegado"
 				};
 
 				string jsonRespuesta = JsonSerializer.Serialize(respuestaPayload);
@@ -226,12 +311,53 @@ namespace Escritorio.ViewModel
 					});
 				}
 
-				MessageBox.Show($"Has DENEGADO el acceso al Lab {peticion.LaboratorioID} al Usuario {peticion.UsuarioID}.", "Rechazado");
+				MessageBox.Show($"Acceso DENEGADO al Lab {peticion.LaboratorioID} al Usuario {peticion.UsuarioID}.", "Rechazado");
 				ListaPeticiones.Remove(peticion);
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show($"Error al enviar respuesta al móvil: {ex.Message}");
+				MessageBox.Show($"Error al denegar peticion: {ex.Message}");
+			}
+		}
+
+		private async Task ActualizarCardsDesdeHistorialAsync()
+		{
+			try
+			{
+				var historial = await _apiService.ObtenerHistorialPrestamosAsync();
+
+				Application.Current.Dispatcher.Invoke(() =>
+				{
+					foreach (var lab in ListaLaboratorios)
+					{
+						var prestamo = historial?
+							.Where(p => p.LaboratorioID == lab.ID
+								&& p.FechaCierre == default(DateTime)
+								&& p.FechaCierreRemoto == default(DateTime))
+							.OrderByDescending(p => p.FechaSolicitud)
+							.FirstOrDefault();
+
+						if (prestamo != null)
+						{
+							lab.DatosPuerta.UsuarioNombre = prestamo.Usuario?.Nombre ?? $"Usuario #{prestamo.UsuarioID}";
+							lab.DatosPuerta.Cargo = prestamo.Usuario != null ? prestamo.Usuario.Rol.ToString() : "Sin asignar";
+							lab.DatosPuerta.HoraInicio = prestamo.FechaSolicitud.ToString("dd/MM/yyyy HH:mm");
+						}
+						else
+						{
+							lab.DatosPuerta.UsuarioNombre = string.Empty;
+							lab.DatosPuerta.Cargo = string.Empty;
+							lab.DatosPuerta.HoraInicio = string.Empty;
+							lab.DatosPuerta.EstadoPuerta = "Cerrado";
+						}
+
+						lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+					}
+				});
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[HISTORIAL] Error: {ex.Message}");
 			}
 		}
 	}
