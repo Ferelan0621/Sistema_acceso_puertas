@@ -1,7 +1,7 @@
 ﻿using System; // Necesario para Lazy<T>
 using System.Collections.ObjectModel;
 using Shared.Models;
-enum 
+
 namespace Escritorio.Data
 {
 	public class SharedData
