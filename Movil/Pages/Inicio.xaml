@@ -122,7 +122,7 @@
                                         <RoundRectangle CornerRadius="10"/>
                                     </Border.StrokeShape>
 
-                                    <Label Text="{Binding Estatus}"
+                                    <Label Text="{Binding Estatus,StringFormat= 'Estado: {0}'}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="#1C1C1E"

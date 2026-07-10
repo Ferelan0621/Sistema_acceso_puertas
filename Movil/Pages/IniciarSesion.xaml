@@ -17,10 +17,7 @@
 
             <Grid RowDefinitions="350,*">
 
-                <!--======================-->
-                <!-- IMAGEN SUPERIOR -->
-                <!--======================-->
-                <Grid>
+                <Grid Grid.Row="0">
                     <Image
                         Source="uni.png"
                         Aspect="AspectFill"/>
@@ -83,21 +80,15 @@
                     </VerticalStackLayout>
                 </Grid>
 
-                <!--======================-->
-                <!-- FORMULARIO -->
-                <!--======================-->
-                <Border
-                    Grid.Row="1"
-                    Margin="0,-45,0,0"
-                    BackgroundColor="White"
-                    StrokeThickness="0"
-                    Padding="30,55,30,80">
+                <Grid Grid.Row="1" Margin="0,-45,0,0">
 
-                    <Border.StrokeShape>
-                        <PathGeometry Figures="M0,40 C90,5 250,0 450,45 L450,1000 L0,1000 Z"/>
-                    </Border.StrokeShape>
+                    <Path Data="M0,40 C90,5 250,0 450,45 L450,1000 L0,1000 Z" 
+                          Fill="White" 
+                          Aspect="Fill"
+                          HorizontalOptions="FillAndExpand" 
+                          VerticalOptions="FillAndExpand"/>
 
-                    <VerticalStackLayout Spacing="18">
+                    <VerticalStackLayout Spacing="18" Padding="30,55,30,80">
 
                         <Label
                             Text="¡Bienvenido!"
@@ -113,7 +104,6 @@
                             HorizontalTextAlignment="Center"
                             Margin="0,0,0,15"/>
 
-                        <!-- Entrada Clave ISSEMYM -->
                         <Border HeightRequest="55" Stroke="#DDDDDD" StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12"/>
@@ -127,7 +117,6 @@
                                 FontSize="16"/>
                         </Border>
 
-                        <!-- Entrada Contraseña -->
                         <Border HeightRequest="55" Stroke="#DDDDDD" StrokeThickness="1">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12"/>
@@ -142,7 +131,6 @@
                                 FontSize="16"/>
                         </Border>
 
-                        <!-- Botón de Iniciar Sesión -->
                         <Button
                             x:Name="btnIniciarsesion"
                             Text="Iniciar Sesión"
@@ -160,7 +148,6 @@
                             </Button.Shadow>
                         </Button>
 
-                        <!-- Olvidaste tu contraseña -->
                         <Label
                             Text="¿Olvidaste tu contraseña?"
                             TextDecorations="Underline"
@@ -174,11 +161,10 @@
                         </Label>
 
                     </VerticalStackLayout>
-                </Border>
+                </Grid>
             </Grid>
         </ScrollView>
 
-        <!-- Indicador de carga superpuesto -->
         <ActivityIndicator 
             x:Name="LoadingIndicator" 
             IsRunning="False" 
