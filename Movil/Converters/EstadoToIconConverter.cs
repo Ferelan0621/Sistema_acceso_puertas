@@ -13,7 +13,7 @@ public class EstadoToIconConverter : IValueConverter
         {
             return estado switch
             {
-                EstadoLaboratorio.Disponible => ImageSource.FromFile("disponible.png") ,
+                EstadoLaboratorio.Disponible => ImageSource.FromFile("sidispo.png") ,
                 EstadoLaboratorio.Ocupado => ImageSource.FromFile("ocupado.png"),
                 EstadoLaboratorio.Mantenimiento => ImageSource.FromFile("mantenimiento.png"),
                 EstadoLaboratorio.Limpieza => ImageSource.FromFile("limpieza.png"), // Agregado el icono de limpieza
