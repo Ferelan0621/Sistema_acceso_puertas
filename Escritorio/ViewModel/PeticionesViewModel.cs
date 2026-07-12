@@ -98,16 +98,16 @@ namespace Escritorio.ViewModel
                 string nombreLab = lab?.NombreLaboratorio ?? $"Laboratorio {nuevaPeticion.LaboratorioID}";
 
                 // Mostramos la tarjeta del lab en "Pendiente" mientras decides
-                if (lab != null)
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        lab.DatosPuerta.UsuarioNombre = nombreUser;
-                        lab.DatosPuerta.Cargo = "Esperando aprobación...";
-                        lab.DatosPuerta.HoraInicio = nuevaPeticion.FechaPrestamo;
-                        lab.OnPropertyChanged(nameof(lab.DatosPuerta));
-                    });
-                }
+                //if (lab != null)
+                //{
+                //    Application.Current.Dispatcher.Invoke(() =>
+                //    {
+                //        lab.DatosPuerta.UsuarioNombre = nombreUser;
+                //        lab.DatosPuerta.Cargo = "Esperando aprobación...";
+                //        lab.DatosPuerta.HoraInicio = nuevaPeticion.FechaPrestamo;
+                //        lab.OnPropertyChanged(nameof(lab.DatosPuerta));
+                //    });
+                //}
 
                 // Disparamos la ventana flotante en el hilo visual
                 Application.Current.Dispatcher.Invoke(() =>

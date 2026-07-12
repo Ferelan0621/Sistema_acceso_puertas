@@ -24,8 +24,6 @@ namespace Shared.Models
 		[JsonPropertyName("estatus")]
 		private EstadoLaboratorio _estatus;
 
-		
-
 		[JsonIgnore]
 		public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
 	}
@@ -49,19 +47,16 @@ namespace Shared.Models
 	}
 	public partial class DatosCambio : ObservableObject
 	{
-        // 🔑 DatosPuerta va aquí directamente en Laboratorios
         [ObservableProperty]
         [JsonPropertyName("datosPuerta")]
         private PuertaData _datosPuerta = new PuertaData();
 
-        // 🔑 FIX 1: Si la API manda null en DatosPuerta, lo protegemos
         partial void OnDatosPuertaChanged(PuertaData oldValue, PuertaData newValue)
         {
             if (newValue == null)
                 DatosPuerta = new PuertaData();
         }
 
-        // 🔑 FIX 2: Exponemos OnPropertyChanged para forzar refresco desde el ViewModel
         public new void OnPropertyChanged(string propertyName)
             => base.OnPropertyChanged(propertyName);
     }

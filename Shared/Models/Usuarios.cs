@@ -16,7 +16,7 @@ namespace Shared.Models
         // Relación uno a muchos con Prestamos
         [JsonIgnore]
         public ICollection<Prestamos> Prestamos { get; set; } = new List<Prestamos>();
-    }
+   }
     public class LoginRequest
     {
         public string? ClaveISSEMYM { get; set; }
