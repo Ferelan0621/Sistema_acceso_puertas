@@ -22,10 +22,6 @@ public partial class IniciarSesion : ContentPage
         // Para obtener el ID:
         int idUsuario = Preferences.Default.Get("usuarioID", 0);
     }
-
-
-  
-
     private async void btnIniciarsesion_Clicked(object sender, EventArgs e)
     {
       
@@ -72,14 +68,5 @@ public partial class IniciarSesion : ContentPage
             LoadingIndicator.IsRunning = false;
             btnIniciarsesion.IsEnabled = true;
         }
-    }
-
-
-
-
-    private async void OnForgotPasswordTapped(object sender, TappedEventArgs e)
-    {
-
-        await Shell.Current.GoToAsync("Password");
     }
 }

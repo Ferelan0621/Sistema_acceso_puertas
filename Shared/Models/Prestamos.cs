@@ -7,10 +7,8 @@ namespace Shared.Models
     {
         public int ID { get; set; }
 
-        // Clave foránea hacia el usuario que creó la petición
         public int UsuarioID { get; set; }
 
-        // Propiedad de navegación hacia el usuario que la creó
         [ObservableProperty]
         private Usuarios? usuario;
 

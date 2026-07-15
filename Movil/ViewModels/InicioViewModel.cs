@@ -48,11 +48,58 @@ public partial class InicioViewModel : ObservableObject
     public InicioViewModel()
     {
         _miBroker = new ConexionMqtt();
+        CargarEstadoUsuario(); // Recupera el estado guardado al iniciar la vista
         _ = IniciarComunicacionMqtt();
     }
 
     private int userId => Preferences.Default.Get("usuarioID", 0);
     public string username => Preferences.Default.Get("Nombre", "usuariodef");
+
+    // =====================================================================
+    // NUEVA LÓGICA DE SESIÓN E INACTIVIDAD (Separada por Usuario)
+    // =====================================================================
+    private void CargarEstadoUsuario()
+    {
+        if (userId != 0)
+        {
+            // Carga específicamente el laboratorio que este usuario tenía prestado
+            LaboratorioAceptadoId = Preferences.Default.Get($"LabAceptado_{userId}", -1);
+        }
+    }
+
+    public void ValidarInactividad()
+    {
+        if (userId == 0) return;
+
+        var ultimaActividad = Preferences.Default.Get($"UltimaActividad_{userId}", DateTime.Now);
+        var tiempoInactivo = DateTime.Now - ultimaActividad;
+
+        if (tiempoInactivo.TotalHours >= 5)
+        {
+            // Forzar cierre por inactividad
+            Preferences.Default.Remove("usuarioID");
+            Preferences.Default.Remove("Nombre");
+
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await Shell.Current.DisplayAlert("Sesión Expirada", "Tu sesión se ha cerrado por inactividad.", "OK");
+                await Shell.Current.GoToAsync("//IniciarSesion"); // Verifica que tu ruta se llame así
+            });
+        }
+        else
+        {
+            RegistrarActividad();
+        }
+    }
+
+    public void RegistrarActividad()
+    {
+        if (userId != 0)
+        {
+            Preferences.Default.Set($"UltimaActividad_{userId}", DateTime.Now);
+        }
+    }
+    // =====================================================================
 
     public void IniciarEscuchaSSE()
     {
@@ -67,6 +114,8 @@ public partial class InicioViewModel : ObservableObject
     public void LiberarLaboratorio()
     {
         LaboratorioAceptadoId = -1;
+        Preferences.Default.Set($"LabAceptado_{userId}", -1); // Persistir liberación
+        RegistrarActividad();
         _ = CargarLaboratoriosAsync();
     }
 
@@ -120,6 +169,8 @@ public partial class InicioViewModel : ObservableObject
     [RelayCommand]
     private async Task SeleccionarLaboratorioAsync(Laboratorios labSeleccionado)
     {
+        RegistrarActividad(); // Refrescar el contador de 5 horas
+
         if (labSeleccionado == null) return;
 
         // Limpiamos la selección visual para evitar que se quede "pegado"
@@ -150,8 +201,13 @@ public partial class InicioViewModel : ObservableObject
 
                 try
                 {
-                    await _miBroker.PublicarMensajeAsync(MqttServices.cerrado, jsonSecundario);
-                    await Shell.Current.DisplayAlert("Comando Enviado", "Se envió la petición extra al laboratorio.", "OK");
+                    // Corregido: Faltaba el punto y coma al final de esta línea
+                    bool cerrar = await Shell.Current.DisplayAlertAsync("Cerrar Laboratorio", "¿Deseas cerrar el laboratorio de manera remota?", "Si", "No");
+                    if (cerrar)
+                    {
+                        await _miBroker.PublicarMensajeAsync(MqttServices.cerrado, jsonSecundario);
+                        await Shell.Current.DisplayAlert("Cerrando Laboratorio", "Espere confirmacion de cierre.", "OK");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -225,8 +281,9 @@ public partial class InicioViewModel : ObservableObject
 
                     if (respuesta != null && respuesta.estatus.Equals("aceptado", StringComparison.OrdinalIgnoreCase))
                     {
-                        // NOS ACEPTARON: Asignamos el ID
+                        // NOS ACEPTARON: Asignamos el ID y lo guardamos
                         LaboratorioAceptadoId = respuesta.laboratorioID;
+                        Preferences.Default.Set($"LabAceptado_{userId}", LaboratorioAceptadoId);
 
                         // Reordenar la lista para forzar que quede en primer plano
                         var labAceptado = Laboratorios.FirstOrDefault(l => l.ID == LaboratorioAceptadoId);
@@ -246,6 +303,11 @@ public partial class InicioViewModel : ObservableObject
                     }
                     else if (respuesta != null && respuesta.estatus.Equals("cerrado", StringComparison.OrdinalIgnoreCase))
                     {
+                        // SE CERRÓ: Limpiar estado y disparar alerta de segundo plano
+                        LaboratorioAceptadoId = -1;
+                        Preferences.Default.Set($"LabAceptado_{userId}", -1);
+
+
                         await Shell.Current.DisplayAlert("Laboratorio Cerrado", respuesta.mensaje, "OK");
                         LiberarLaboratorio();
                     }
@@ -268,7 +330,7 @@ public partial class InicioViewModel : ObservableObject
         Laboratorios?.Clear();
         ResultadoJson = string.Empty;
         LaboratorioSeleccionado = null;
-        if(userId != userId)
+        if (userId != userId)
         {
             LiberarLaboratorio();
         }
