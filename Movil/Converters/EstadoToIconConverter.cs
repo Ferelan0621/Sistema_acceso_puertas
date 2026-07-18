@@ -16,7 +16,7 @@ public class EstadoToIconConverter : IValueConverter
                 EstadoLaboratorio.Disponible => ImageSource.FromFile("disponible.png") ,
                 EstadoLaboratorio.Ocupado => ImageSource.FromFile("ocupado.png"),
                 EstadoLaboratorio.Mantenimiento => ImageSource.FromFile("mantenimiento.png"),
-                EstadoLaboratorio.Limpieza => ImageSource.FromFile("limpieza.png"),  // Agregado el icono de limpieza
+                EstadoLaboratorio.Limpieza => ImageSource.FromFile("limpieza.png"), 
                 _ => ImageSource.FromFile("disponible.png")
             };
         }
