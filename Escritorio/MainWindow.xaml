@@ -5,25 +5,93 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Escritorio"
         mc:Ignorable="d"
-        Title="Inicio de Sesion" Height="450" Width="800">
+        Title="Inicio de Sesión" Height="500" Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F8"
+        FontFamily="Segoe UI, sans-serif">
+
+    <!-- Definición de estilos para mantener el código limpio -->
+    <Window.Resources>
+        <!-- Estilo para los campos de texto -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
-        <Button x:Name="btnIniciar"  Content="Iniciar" HorizontalAlignment="Left" Margin="123,301,0,0" VerticalAlignment="Top" Click="btnIniciar_Click"/>
-        <TextBox x:Name="txtUsuario" HorizontalAlignment="Left" Margin="123,146,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="335"/>
-        <PasswordBox x:Name="txtContrasenia" HorizontalAlignment="Left" Margin="123,230,0,0" VerticalAlignment="Top" Width="336"/>
-        <Label Content="Ingrese un Usuario y Contraseña validos" HorizontalAlignment="Center" Margin="0,53,0,0" VerticalAlignment="Top"/>
-        <Label Content="Ingresar Usuario" HorizontalAlignment="Left" Margin="135,120,0,0" VerticalAlignment="Top"/>
-        <Label Content="Ingresar la Contraseña" HorizontalAlignment="Left" Margin="135,0,0,0" VerticalAlignment="Center"/>
-        <Label 
-            Margin="10,20,10,100"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Bottom">
-            <TextBlock>
-                <Hyperlink Click="lblContrasenia" Cursor="Hand">
-                    ¿Haz olvidado la contraseña?
-                </Hyperlink>
-            </TextBlock>
-        </Label>
-        <Label x:Name="lblFaltausuario" Content="*Por favor agrega un Usuario valido" HorizontalAlignment="Left" Margin="135,169,0,0" VerticalAlignment="Top" Foreground="Red" Visibility="Hidden"/>
-        <Label x:Name="lblFaltacontrasenia" Content="*Contraseña incorrecta intente de nuevo" HorizontalAlignment="Left" Margin="135,253,0,0" VerticalAlignment="Top" Foreground="Red" Visibility="Hidden"/>
+        <Image Source="pack://application:,,,/Images/Escuela.png" Stretch="Fill" Opacity="0.65" />
+        
+        
+        <Border Width="400" Background="White" CornerRadius="12" Padding="40" 
+                VerticalAlignment="Center" HorizontalAlignment="Center">
+
+            
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Color="#222222" Opacity="0.1"/>
+            </Border.Effect>
+
+            
+            <StackPanel>
+
+                
+                <TextBlock Text="Bienvenido" FontSize="26" FontWeight="Bold" Foreground="#1F2937" 
+                           HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                <TextBlock Text="Ingresa tus credenciales para continuar" FontSize="14" Foreground="#6B7280" 
+                           HorizontalAlignment="Center" Margin="0,0,0,35"/>
+
+                
+                <TextBlock Text="Usuario" Foreground="#374151" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,8"/>
+                <TextBox x:Name="txtUsuario" />
+                <Label x:Name="lblFaltausuario" Content="* Por favor agrega un usuario válido" 
+                       Foreground="#DC2626" FontSize="12" Visibility="Collapsed" Padding="0,5,0,0"/>
+
+                
+                <TextBlock Text="Contraseña" Foreground="#374151" FontWeight="SemiBold" FontSize="13" Margin="0,20,0,8"/>
+                <PasswordBox x:Name="txtContrasenia" />
+                <Label x:Name="lblFaltacontrasenia" Content="* Contraseña incorrecta, intente de nuevo" 
+                       Foreground="#DC2626" FontSize="12" Visibility="Collapsed" Padding="0,5,0,0"/>
+
+                
+                <Button x:Name="btnIniciar" Content="INICIAR SESIÓN" Click="btnIniciar_Click"
+                        Height="45" Margin="0,35,0,0" 
+                        Background="#DC2626" Foreground="White" 
+                        FontSize="14" FontWeight="Bold" Cursor="Hand" BorderThickness="1">
+                    <Button.Resources>
+                        
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                    <Button.Style>
+                        
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.9"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+            </StackPanel>
+        </Border>
+        
     </Grid>
 </Window>

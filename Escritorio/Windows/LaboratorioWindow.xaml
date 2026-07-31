@@ -3,100 +3,155 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:Shared.Models;assembly=Shared"
         xmlns:vm="clr-namespace:Escritorio.Mvvm"
-        Title="Laboratorios" Height="600" Width="900">
+        Title="Laboratorios" Height="650" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI, sans-serif">
 
-	<Window.DataContext>
-		<vm:LaboratorioViewModel/>
-	</Window.DataContext>
+    <Window.DataContext>
+        <vm:LaboratorioViewModel/>
+    </Window.DataContext>
 
-	<Grid Background="#F5F6FA">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition Height="*"/>
-			<RowDefinition Height="Auto"/>
-		</Grid.RowDefinitions>
+    <Grid Background="#F4F6F8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-		<Button x:Name="btnImagenregresar" Grid.Row="0" HorizontalAlignment="Left" Margin="20,20,0,10" Click="btnImagenregresar_Click" Height="24" Width="24" Cursor="Hand" >
-			<Button.Template>
-				<ControlTemplate TargetType="Button">
-					<ContentPresenter />
-				</ControlTemplate>
-			</Button.Template>
-			<Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" />
-		</Button>
+        <!-- Barra Superior -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="20,20,20,10">
+            <Button x:Name="btnImagenregresar" Click="btnImagenregresar_Click" 
+                    Height="28" Width="28" Cursor="Hand" Background="Transparent" BorderThickness="0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+                <Image Source="pack://application:,,,/Images/Atras.png" Stretch="Uniform" Opacity="0.7"/>
+            </Button>
 
-		<Ellipse Grid.Row="0" Width="15" Height="15" Fill="{Binding StatusColor}" HorizontalAlignment="Left" Margin="40,20,0,10" VerticalAlignment="Center"/>
-		<TextBlock Grid.Row="0" Text="{Binding StatusMensaje}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="60,20,0,10" />
+            <Ellipse Width="12" Height="12" Fill="{Binding StatusColor}" Margin="20,0,8,0" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding StatusMensaje}" VerticalAlignment="Center" FontSize="14" FontWeight="Medium" Foreground="#4B5563"/>
+        </StackPanel>
 
-		<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10">
-			<ItemsControl ItemsSource="{Binding ListaLaboratorios}">
+        <!-- Lista de Laboratorios -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10,0,10,10">
+            <ItemsControl ItemsSource="{Binding ListaLaboratorios}">
 
-				<ItemsControl.ItemsPanel>
-					<ItemsPanelTemplate>
-						<WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-					</ItemsPanelTemplate>
-				</ItemsControl.ItemsPanel>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-				<ItemsControl.ItemTemplate>
-					<DataTemplate DataType="{x:Type models:Laboratorios}">
-						<Border Background="#FFDADADA" CornerRadius="10" Margin="15" Width="180" Height="260">
-							<Border.Effect>
-								<DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
-							</Border.Effect>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:Laboratorios}">
+                        <!-- Tarjeta Principal del Laboratorio -->
+                        <Border Background="White" CornerRadius="12" Margin="15" Width="220" Padding="15">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="4" Opacity="0.08" Color="#000000" Direction="270"/>
+                            </Border.Effect>
 
-							<Grid>
-								<Label Content="{Binding NombreLaboratorio}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="14"/>
+                            <!-- Usamos StackPanel para que los elementos se apilen naturalmente -->
+                            <StackPanel>
 
-								<Image Margin="0,45,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="60" Width="60">
-									<Image.Style>
-										<Style TargetType="Image">
-											<Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
-											<Style.Triggers>
-												<DataTrigger Binding="{Binding DatosPuerta.EstadoPuerta}" Value="Abierto">
-													<Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
-												</DataTrigger>
-											</Style.Triggers>
-										</Style>
-									</Image.Style>
-								</Image>
+                                <!-- Título y Dirección -->
+                                <TextBlock Text="{Binding NombreLaboratorio}" HorizontalAlignment="Center" 
+                                           FontWeight="Bold" FontSize="16" Foreground="#1F2937" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding DireccionLora}" HorizontalAlignment="Center" 
+                                           FontSize="11" Foreground="#9CA3AF" Margin="0,2,0,15"/>
 
-								<Label Content="{Binding DireccionLora}" HorizontalAlignment="Center" Margin="0,110,0,0" VerticalAlignment="Top" FontSize="10" Foreground="DarkGray"/>
+                                <!-- Icono de la Puerta -->
+                                <Image HorizontalAlignment="Center" Height="55" Width="55" Margin="0,0,0,15">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_cerrada.png"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DatosPuerta.EstadoPuerta}" Value="Abierto">
+                                                    <Setter Property="Source" Value="pack://application:,,,/Images/Puerta_abierta.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
 
-								<StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,135,0,0" VerticalAlignment="Top">
-									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-										<StackPanel Margin="0,0,10,0">
-											<Label Content="Inicio" FontSize="10" Padding="0"/>
-											<Label Content="{Binding DatosPuerta.HoraInicio}" FontWeight="SemiBold" Padding="0"/>
-										</StackPanel>
-										<StackPanel Margin="10,0,0,0">
-											<Label Content="Final" FontSize="10" Padding="0"/>
-											<Label Content="{Binding DatosPuerta.HoraFinal}" FontWeight="SemiBold" Padding="0"/>
-										</StackPanel>
-									</StackPanel>
+                                <!-- Contenedor de Horarios -->
+                                <Grid Margin="0,0,0,15">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-									<StackPanel Margin="0,10,0,0">
-										<TextBlock Text="{Binding DatosPuerta.UsuarioNombre, StringFormat='Usuario: {0}'}" 
-                   FontSize="10" FontWeight="Bold" TextAlignment="Center"/>
-										<TextBlock Text="{Binding DatosPuerta.Cargo, StringFormat='Cargo: {0}'}" 
-                   FontSize="10" FontStyle="Italic" TextAlignment="Center"/>
-									</StackPanel>
-								</StackPanel>
+                                    <!-- Inicio -->
+                                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                        <TextBlock Text="INICIO" FontSize="10" Foreground="#6B7280" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding DatosPuerta.HoraInicio}" FontWeight="Bold" FontSize="13" Foreground="#374151" HorizontalAlignment="Center"/>
+                                    </StackPanel>
 
-								<Button Content="Abrir Lab" HorizontalAlignment="Center" Margin="0,195,0,0" VerticalAlignment="Top" Background="White" Width="100" Cursor="Hand"
-            Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-            CommandParameter="{Binding}"/>
+                                    <!-- Final -->
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                        <TextBlock Text="FINAL" FontSize="10" Foreground="#6B7280" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{Binding DatosPuerta.HoraFinal}" FontWeight="Bold" FontSize="13" Foreground="#374151" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
 
-							</Grid>
-						</Border>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
+                                <!-- Información del Usuario (en una cajita sutil) -->
+                                <Border Background="#F3F4F6" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DatosPuerta.UsuarioNombre}" 
+                                                   FontSize="12" FontWeight="Bold" Foreground="#1F2937" 
+                                                   TextAlignment="Center" TextTrimming="CharacterEllipsis" 
+                                                   ToolTip="{Binding DatosPuerta.UsuarioNombre}"/>
+                                        <TextBlock Text="{Binding DatosPuerta.Cargo}" 
+                                                   FontSize="11" FontStyle="Italic" Foreground="#4B5563" 
+                                                   TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
 
-			</ItemsControl>
-		</ScrollViewer>
+                                <!-- Botón de Acción -->
+                                <Button Content="Abrir Lab" HorizontalAlignment="Stretch" Height="35" Cursor="Hand"
+                                        Command="{Binding DataContext.AbrirLabCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        CommandParameter="{Binding}"
+                                        Background="#0097E6" Foreground="White" FontWeight="Bold" BorderThickness="0">
+                                    <Button.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="6"/>
+                                        </Style>
+                                    </Button.Resources>
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="0.85"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
 
-		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,10,20,20">
-			<Button x:Name="btnHistorialpeticiones" Content="Ver Historial de Peticiones" Background="#0097E6" Foreground="White" FontWeight="SemiBold" Padding="15,8" Cursor="Hand" BorderThickness="0" Click="btnHistorialpeticiones_Click"/>
-		</StackPanel>
-	</Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
+        <!-- Barra Inferior -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="0,1,0,0" Padding="20,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="btnHistorialpeticiones" Content="Ver Historial de Peticiones" 
+                        Background="#10B981" Foreground="White" FontWeight="SemiBold" 
+                        Padding="20,10" Cursor="Hand" BorderThickness="0" 
+                        Click="btnHistorialpeticiones_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
 </Window>

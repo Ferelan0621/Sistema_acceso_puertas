@@ -30,8 +30,8 @@ namespace Escritorio.Windows
 
             try
             {
-                InicioWindow ventanaInicio = new InicioWindow();
-                ventanaInicio.Show();
+                MainWindow ventanaMain = new MainWindow();
+                ventanaMain.Show();
                 this.Close();
             }
             catch (Exception ex)
